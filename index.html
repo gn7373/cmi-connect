@@ -163,6 +163,13 @@ header.site.masthead-mode{
 .info-tab:hover{ color: var(--accent); }
 .info-panel{ display: none; }
 .info-panel.active{ display: block; }
+@media (max-width: 700px){
+  /* The masthead title and the top-right nav already say which of
+     About/FAQ/Feedback you're on and let you switch - this in-page
+     tab list was just adding ~500px of scrolling before the actual
+     content on a phone, for information already shown twice over. */
+  .info-tabs{ display: none; }
+}
 #feedbackText{
   width: 100%;
   min-height: 100px;
@@ -235,6 +242,16 @@ header.site.masthead-mode{
   transition: max-height 0.3s ease;
 }
 .faq-item.open .faq-a{ margin-top: 12px; }
+@media (max-width: 700px){
+  .about-body{ font-size: 16px; line-height: 1.6; }
+  .about-body:first-child{ margin-top: 16px; }
+  #feedbackText{ margin-top: 16px; font-size: 16px; }
+  .feedback-send{ font-size: 15px; }
+  .faq-item{ padding: 24px 0; }
+  .faq-item:first-child{ padding-top: 16px; }
+  .faq-q{ font-size: 17px; }
+  .faq-a{ font-size: 16px; line-height: 1.55; }
+}
 
 .site-footer{
   display: flex;
