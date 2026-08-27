@@ -68,7 +68,10 @@ header.site{
    of the image - the 38% anchor tuned for the tall hero crops out the
    tower tops here. Raised specifically for this shorter box. */
 header.site.masthead-mode{
-  background-position: center 8%;
+  /* Measured the tower tips directly in the source photo (~12% down)
+     and solved for the anchor that starts the visible crop right at
+     that point on a typical laptop width, instead of guessing. */
+  background-position: center 20%;
 }
 .hero-top{
   width: 100%;
@@ -350,6 +353,17 @@ header.site p{
   justify-content: center;
   padding: 0 24px;
 }
+@media (max-width: 700px){
+  #heroSub{
+    /* Shrinking this to fully match the photo's aspect ratio (~193px at
+       375px wide) would show the whole width, including both towers -
+       but leaves too little room for a 3-line-wrapped category title
+       above the back button without them colliding again. 220px is the
+       tightest height that still keeps a safe gap for the longest real
+       title, while showing noticeably more of the towers than before. */
+    height: 220px;
+  }
+}
 #heroSub h2{
   font-family: 'Fraunces', serif;
   font-weight: 500;
@@ -622,6 +636,7 @@ main{ padding: 8px 6vw 40px; }
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+  margin-top: 7px;
 }
 .topic-tag{
   display: inline-block;
