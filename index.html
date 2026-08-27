@@ -1475,6 +1475,7 @@ function renderGrid(){
         ${a.alsoMeetsIn.length ? `<div class="tag-line"><span class="label">Also meets in</span><span class="values">${joinValues(a.alsoMeetsIn)}</span></div>` : ''}
         ${a.brandAgency ? `<div class="tag-line"><span class="label">Type of experience</span><span class="values">${brandAgencyDisplayLabel(a.brandAgency)}</span></div>` : ''}
         ${a.industries.length ? `<div class="tag-line"><span class="label">Industries worked in</span><span class="values">${joinValues(a.industries)}</span></div>` : ''}
+        ${a.marketingAreas.length ? `<div class="tag-line"><span class="label">Marketing areas</span><span class="values">${joinValues(a.marketingAreas)}</span></div>` : ''}
         ${a.topics.length ? `<div class="tag-line"><span class="label">Can advise on</span><span class="topic-tags">${a.topics.map(t => `<span class="topic-tag">${topicShortLabel(t)}</span>`).join('')}</span></div>` : ''}
       </div>
       <div class="card-action">
