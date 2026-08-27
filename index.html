@@ -686,6 +686,15 @@ main{ padding: 8px 6vw 40px; }
   font-style: italic;
   color: var(--muted);
   margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.company-logo{
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  flex-shrink: 0;
 }
 .capacity-line{ font-size: 12px; margin-top: 8px; color: var(--muted); }
 .capacity-line strong{ color: var(--accent); font-weight: 600; }
@@ -1545,6 +1554,23 @@ function joinValues(values, transform){
 // Collapse that specific combination down to just the "Both" option on the
 // card display, since listing all three is redundant. Filtering/matching
 // still uses the raw, uncollapsed array.
+// Best-effort guess at a company's domain, for a favicon-sized logo next
+// to their name on each card. The sheet only has company NAMES, not
+// domains, so this is inherently unreliable for smaller/less-known
+// companies - a wrong or missing icon is an accepted tradeoff, not a bug.
+// If the company field already contains a real URL (a few alumni typed
+// one in), that's used directly instead of guessing.
+function guessCompanyDomain(company){
+  const urlMatch = company.match(/https?:\/\/([^\s/]+)/i);
+  if(urlMatch) return urlMatch[1].replace(/^www\./i, '');
+  let name = company.replace(/\s*\([^)]*\)\s*$/, '').trim();
+  name = name.replace(/[,;].*$/, '').trim();
+  name = name.replace(/\b(inc|llc|ltd|corp|corporation|co)\.?$/i, '').trim();
+  const slug = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+  if(!slug) return null;
+  return slug + '.com';
+}
+
 function cardFormatValues(formatArr){
   const both = "Both in person (Evanston/Chicago) and virtual";
   const inPerson = "In person (Evanston/Chicago)";
@@ -1619,6 +1645,10 @@ function renderGrid(){
   filtered.forEach(a => {
     const pickIndex = cart.indexOf(a.id);
     const inCart = pickIndex !== -1;
+    const companyDomain = guessCompanyDomain(a.company);
+    const companyLogo = companyDomain
+      ? `<img class="company-logo" src="https://www.google.com/s2/favicons?domain=${companyDomain}&sz=64" alt="" onerror="this.remove()">`
+      : '';
 
     const row = document.createElement('div');
     row.className = 'alum-row';
@@ -1627,7 +1657,7 @@ function renderGrid(){
         <div>
           <div class="alum-name">${a.name}</div>
           ${a.role ? `<div class="alum-role">${a.role}</div>` : ''}
-          <div class="alum-company">${a.company}</div>
+          <div class="alum-company">${companyLogo}${a.company}</div>
         </div>
         <div class="card-action">
           <button class="add-btn ${inCart ? 'added' : ''}" data-id="${a.id}">
