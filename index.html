@@ -126,6 +126,10 @@ header.site.masthead-mode{
   padding: 4px 0;
   border-bottom: 1px solid transparent;
 }
+@media (max-width: 700px){
+  .top-bar .tab-link{ font-size: 14px; }
+  .top-bar .top-tabs{ gap: 24px; }
+}
 .tab-link:hover{ border-bottom-color: var(--accent-light); }
 
 .info-layout{
@@ -363,6 +367,9 @@ header.site p{
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+@media (max-width: 700px){
+  .back-btn{ font-size: 14px; bottom: 16px; }
+}
 #heroSub{
   position: relative;
   height: 290px;
@@ -374,13 +381,12 @@ header.site p{
 }
 @media (max-width: 700px){
   #heroSub{
-    /* Shrinking this to fully match the photo's aspect ratio (~193px at
-       375px wide) would show the whole width, including both towers -
-       but leaves too little room for a 3-line-wrapped category title
-       above the back button without them colliding again. 220px is the
-       tightest height that still keeps a safe gap for the longest real
-       title, while showing noticeably more of the towers than before. */
-    height: 220px;
+    /* 51.3vw = width / 1.947, the photo's own aspect ratio - matching
+       it exactly means "cover" no longer needs to crop the sides at
+       all, showing the full width including both towers. Only fits
+       safely now that .back-btn is also shrunk for mobile above,
+       freeing enough room for a 3-line-wrapped title. */
+    height: min(290px, 51.3vw);
   }
 }
 #heroSub h2{
@@ -413,6 +419,7 @@ header.site p{
   font-style: italic;
   color: var(--ink);
   cursor: pointer;
+  text-wrap: balance;
 }
 .category-option:last-child{ border-bottom: 1px solid var(--line); }
 .category-option:hover{ color: var(--accent); }
@@ -788,7 +795,7 @@ main{ padding: 8px 6vw 40px; }
           <button class="tab-link" id="feedbackLink" data-nav="feedback">Feedback</button>
         </div>
       </div>
-      <h1><span class="drop-c">C</span>MI <span class="word-connect"><span class="drop-c">C</span>onnect</span></h1>
+      <h1><span class="drop-c">C</span><span class="drop-c">MI</span> <span class="word-connect"><span class="drop-c">C</span>onnect</span></h1>
       <div class="scroll-cue" id="scrollCue" aria-hidden="false" role="button" tabindex="0" aria-label="Find alumni">
         <span class="scroll-cue-label">Find alumni</span>
         <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
