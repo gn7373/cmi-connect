@@ -314,6 +314,12 @@ header.site h1{
   top: -72px;
 }
 .drop-c{ font-size: 2em; }
+.word-cmi{
+  /* At this font size, a single space character between "CMI" and
+     "Connect" reads as barely a gap at all - almost one word. Adds
+     real breathing room on laptop, where both sit on one line. */
+  margin-right: 0.18em;
+}
 @media (max-width: 700px){
   header.site h1{
     /* Two words forced onto one nowrap line meant a narrow phone had
@@ -327,7 +333,7 @@ header.site h1{
     font-size: clamp(30px, 9vw, 40px);
   }
   .word-connect{ display: block; }
-  .word-cmi{ font-size: 1.15em; }
+  .word-cmi{ font-size: 1.15em; margin-right: 0; }
 }
 #heroLanding{
   text-align: center;
