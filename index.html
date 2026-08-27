@@ -427,6 +427,10 @@ header.site p{
   border-top: 1px solid var(--line);
   max-height: 60vh;
   overflow-y: auto;
+  /* Same clearance as body.has-cart-bar's padding, so the sticky cart bar
+     can never cover the last checkbox - there's always room to scroll it
+     clear, regardless of exactly how tall the viewport or cart bar are. */
+  padding-bottom: 96px;
 }
 .filter-sidebar.open{ display:block; }
 .filter-sidebar-header{
