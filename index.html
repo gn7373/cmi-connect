@@ -1280,6 +1280,16 @@ function sortFilterValues(key, values){
   });
 }
 
+// A masthead set from a category click (e.g. "Brand management / brand
+// strategy") goes stale the moment someone edits filters directly in the
+// sidebar - rather than trying to describe every possible combination of
+// active filters, fall back to the same generic heading used for "Show me
+// all available alumni".
+function resetMastheadToGeneric(){
+  document.getElementById('subTitle').textContent = 'All available alumni';
+  lastCategoryKey = null;
+}
+
 function buildFilterPanel(){
   const options = collectFilterOptions();
   const panel = document.getElementById('filterPanel');
@@ -1312,6 +1322,7 @@ function buildFilterPanel(){
       if(selectAllBox.checked) values.forEach(v => filterState[key].add(v));
       else values.forEach(v => filterState[key].delete(v));
       optionCheckboxes.forEach(cb => cb.checked = selectAllBox.checked);
+      resetMastheadToGeneric();
       renderGrid();
     };
     selectAllLabel.appendChild(selectAllBox);
@@ -1328,6 +1339,7 @@ function buildFilterPanel(){
         if(checkbox.checked) filterState[key].add(val);
         else filterState[key].delete(val);
         selectAllBox.checked = values.every(v => filterState[key].has(v));
+        resetMastheadToGeneric();
         renderGrid();
       };
       optionLabel.appendChild(checkbox);
