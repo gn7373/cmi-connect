@@ -425,6 +425,8 @@ header.site p{
   margin-top: 20px;
   padding-top: 18px;
   border-top: 1px solid var(--line);
+  max-height: 60vh;
+  overflow-y: auto;
 }
 .filter-sidebar.open{ display:block; }
 .filter-sidebar-header{
@@ -544,6 +546,8 @@ main{ padding: 8px 6vw 40px; }
     border-right: 1px solid var(--line);
     position: sticky;
     top: 100px;
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
   }
   .filter-toggle-btn{ display: none; }
 }
