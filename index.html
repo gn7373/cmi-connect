@@ -294,6 +294,9 @@ header.site.masthead-mode{
   font-weight: 500;
   color: inherit;
 }
+@media (max-width: 700px){
+  .scroll-cue-label{ font-size: 17px; }
+}
 @keyframes scrollBounce{
   0%, 100%{ transform: translateX(-50%) translateY(0); }
   50%{ transform: translateX(-50%) translateY(8px); }
@@ -306,7 +309,11 @@ header.site h1{
   letter-spacing: -0.005em;
   text-align: center;
   text-transform: uppercase;
-  font-size: clamp(30px, 10vw, 240px);
+  /* Now that "MI" and "onnect" both match their drop-cap C at 2em,
+     the whole nowrap line is roughly twice as wide per character as
+     when this clamp was tuned for just two oversized letters - scaled
+     down accordingly so "CMI CONNECT" fits on one line on laptop. */
+  font-size: clamp(30px, 7vw, 100px);
   line-height: 1;
   white-space: nowrap;
   position: relative;
@@ -326,6 +333,7 @@ header.site h1{
     font-size: clamp(30px, 9vw, 40px);
   }
   .word-connect{ display: block; }
+  .word-cmi{ font-size: 1.15em; }
 }
 #heroLanding{
   text-align: center;
@@ -836,7 +844,7 @@ main{ padding: 8px 6vw 40px; }
           <button class="tab-link" id="feedbackLink" data-nav="feedback">Feedback</button>
         </div>
       </div>
-      <h1><span class="drop-c">C</span><span class="drop-c">MI</span> <span class="word-connect"><span class="drop-c">C</span><span class="drop-c">onnect</span></span></h1>
+      <h1><span class="word-cmi"><span class="drop-c">C</span><span class="drop-c">MI</span></span> <span class="word-connect"><span class="drop-c">C</span><span class="drop-c">onnect</span></span></h1>
       <div class="scroll-cue" id="scrollCue" aria-hidden="false" role="button" tabindex="0" aria-label="Find alumni">
         <span class="scroll-cue-label">Find alumni</span>
         <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
