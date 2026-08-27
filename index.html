@@ -921,6 +921,21 @@ const CITY_ALIASES = {
   "New York": ["new york", "nyc"],
   "Pittsburgh": ["pittsburgh"]
 };
+// The real "industries" checkbox options, seen in actual responses so far.
+// Anything not in this list is a free-text "Other" write-in (or, in one
+// case, a respondent who pasted a message into this field by mistake) and
+// gets dropped entirely per an explicit request to hide "Other" answers for
+// this field. A new checkbox option added to the Form later, or a real
+// category that just hasn't been picked by anyone yet, needs a manual
+// addition here to keep showing up.
+const CANONICAL_INDUSTRIES = [
+  "Automotive", "Beauty", "Consulting", "Consumer Packaged Goods (CPG)",
+  "Education", "Fashion & Luxury", "Financial Services", "Food & Beverage",
+  "Government", "Healthcare & Pharmaceuticals", "Law", "Media & Entertainment",
+  "Nonprofit/Social Impact", "Power & Gas", "Retail & E-commerce",
+  "Sports & Sports Marketing", "Startups", "Tech/SaaS", "Travel & Hospitality",
+  "Utilities"
+];
 function extractCities(formatValues){
   const found = new Set();
   formatValues.forEach(val => {
@@ -1143,14 +1158,19 @@ function smartSplit(value, knownOptions, isCompleteList){
 function normalizeRow(row, index){
   const capacityRaw = row[COLUMNS.capacity];
   const capacity = parseInt(capacityRaw, 10);
-  const format = smartSplit(row[COLUMNS.format], KNOWN_OPTIONS.format);
+  const rawFormat = smartSplit(row[COLUMNS.format], KNOWN_OPTIONS.format);
+  const rawIndustries = smartSplit(row[COLUMNS.industries], KNOWN_OPTIONS.industries);
   return {
     id: index,
     name: (row[COLUMNS.name] || "").trim(),
     company: (row[COLUMNS.company] || "").trim(),
-    format: format,
-    alsoMeetsIn: extractCities(format),
-    industries: smartSplit(row[COLUMNS.industries], KNOWN_OPTIONS.industries),
+    // "Other" write-ins are dropped from these two fields, per request -
+    // alsoMeetsIn is computed from the raw (unfiltered) format list first,
+    // so a city mentioned in an Other write-in still surfaces there even
+    // though the write-in itself no longer shows under "Meeting format."
+    format: rawFormat.filter(v => CANONICAL_FORMAT_OPTIONS.includes(v)),
+    alsoMeetsIn: extractCities(rawFormat),
+    industries: rawIndustries.filter(v => CANONICAL_INDUSTRIES.includes(v)),
     marketingAreas: smartSplit(row[COLUMNS.marketingAreas], KNOWN_OPTIONS.marketingAreas),
     brandAgency: (row[COLUMNS.brandAgency] || "").trim(),
     topics: smartSplit(row[COLUMNS.topics], KNOWN_OPTIONS.topics, TOPICS_IS_COMPLETE_LIST),
