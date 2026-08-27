@@ -445,13 +445,15 @@ header.site p{
 }
 @media (max-width: 700px){
   #heroSub h2{
-    /* A long marketing-area/industry title (e.g. "Market Research &
-       Consumer Insights") wrapped to 3 lines at 29px, nearly filling
-       the shorter mobile masthead box top to bottom. 26px collapses
-       it to 2 lines instead, with real breathing room on every side -
-       verified a 15px minimum gap to the back button across every
-       real title. */
-    font-size: 26px;
+    /* A fixed 26px only fixed the crowding at ~375px+ widths - a
+       320px-wide phone (still common) wrapped several long titles to
+       3-4 lines at that same size. Scales with viewport width instead
+       (6vw), floored at 19px so it doesn't shrink further below 320,
+       capped at 26px so it doesn't grow past what was already
+       verified safe near the 700px breakpoint. Re-verified: every
+       real marketing-area/industry title stays at 2 lines max, with a
+       26px+ gap to the back button, all the way down to 320px wide. */
+    font-size: clamp(19px, 6vw, 26px);
   }
 }
 
@@ -672,6 +674,7 @@ main{ padding: 8px 6vw 40px; }
   padding: 30px 0;
   border-top: 1px solid var(--line);
 }
+.alum-row:first-child{ border-top: none; padding-top: 16px; }
 .alum-row:last-child{ border-bottom: 1px solid var(--line); }
 .alum-header{
   display: flex;
@@ -1111,7 +1114,7 @@ const CANONICAL_MARKETING_AREAS = [
 // stored and matched against filters; only the label changes. A write-in
 // isn't in this map and falls back to showing as stored.
 const MARKETING_AREA_DISPLAY_OVERRIDES = {
-  "Brand management / brand strategy": "Brand Management/Strategy",
+  "Brand management / brand strategy": "Brand Management & Strategy",
   "Content marketing & copywriting": "Content Marketing & Copywriting",
   "Customer experience (CX) / lifecycle marketing": "Customer Experience (CX)",
   "Digital marketing & performance marketing": "Digital & Performance Marketing",
@@ -1136,7 +1139,7 @@ function marketingAreaDisplayLabel(value){
 // use that transformed spelling here, not necessarily the raw value.
 const MASTHEAD_LABEL_OVERRIDES = {
   "Consumer Packaged Goods (CPG)": "CPG",
-  "Brand Management/Strategy": "Brand"
+  "Brand Management & Strategy": "Brand"
 };
 const FILTER_ALLOW_LISTS = {
   marketingAreas: CANONICAL_MARKETING_AREAS,
