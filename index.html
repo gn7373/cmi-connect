@@ -447,7 +447,7 @@ header.site p{
 .category-list{
   max-width: 900px;
   margin: 0 auto;
-  padding: 12px 6vw 40px;
+  padding: 16px 6vw 40px;
 }
 .category-option{
   display:block;
@@ -464,6 +464,7 @@ header.site p{
   cursor: pointer;
   text-wrap: balance;
 }
+.category-option:first-child{ border-top: none; padding-top: 0; }
 .category-option:last-child{ border-bottom: 1px solid var(--line); }
 .category-option:hover{ color: var(--accent); }
 @media (max-width: 700px){
@@ -965,7 +966,7 @@ main{ padding: 8px 6vw 40px; }
 
 <div class="cart-bar" id="cartBar" style="display:none">
   <div class="cart-picks" id="cartPicks">
-    <span class="cart-empty-note">Add up to 3 alumni above. The order you rank your alumni is the order we'll prioritize matches.</span>
+    <span class="cart-empty-note">Add up to 3 alumni. The order you rank your alumni is the order we'll prioritize matches.</span>
   </div>
   <button class="submit-btn" id="submitBtn" disabled>
     <span class="cart-icon-wrap">
@@ -1681,7 +1682,7 @@ function renderCart(){
   document.getElementById('cartCountBadge').textContent = cart.length;
 
   if(cart.length === 0){
-    cartPicks.innerHTML = `<span class="cart-empty-note">Add up to ${MAX_PICKS} alumni above. The order you rank your alumni is the order we'll prioritize matches.</span>`;
+    cartPicks.innerHTML = `<span class="cart-empty-note">Add up to ${MAX_PICKS} alumni. The order you rank your alumni is the order we'll prioritize matches.</span>`;
     submitBtn.disabled = true;
     return;
   }
