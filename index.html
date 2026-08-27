@@ -206,6 +206,7 @@ header.site.masthead-mode{
   line-height: 1.7;
   text-align: left;
   margin: 0 0 20px;
+  text-wrap: pretty;
 }
 .about-body:first-child{ margin-top: 64px; }
 #feedbackText{ margin-top: 64px; }
@@ -240,6 +241,7 @@ header.site.masthead-mode{
   max-height: 0;
   overflow: hidden;
   transition: max-height 0.3s ease;
+  text-wrap: pretty;
 }
 .faq-item.open .faq-a{ margin-top: 12px; }
 @media (max-width: 700px){
@@ -309,9 +311,12 @@ header.site h1{
     /* Two words forced onto one nowrap line meant a narrow phone had
        to shrink the whole title (~10vw) just to fit both side by
        side, reading small for a "logo." Stacking them lets each word
-       use much more of the available width on its own line. */
+       use much more of the available width on its own line. Since
+       "onnect" is now the same 2em size as its drop-cap C (matching
+       "CMI"), the base size has to come down further so the full
+       word "CONNECT" - the widest line - still fits the screen. */
     white-space: normal;
-    font-size: clamp(30px, 18vw, 240px);
+    font-size: clamp(30px, 9vw, 40px);
   }
   .word-connect{ display: block; }
 }
@@ -440,6 +445,9 @@ header.site p{
 }
 .category-option:last-child{ border-bottom: 1px solid var(--line); }
 .category-option:hover{ color: var(--accent); }
+@media (max-width: 700px){
+  .category-option{ font-size: 16px; }
+}
 .toolbar{
   padding: 22px 6vw;
   background: var(--paper);
@@ -812,7 +820,7 @@ main{ padding: 8px 6vw 40px; }
           <button class="tab-link" id="feedbackLink" data-nav="feedback">Feedback</button>
         </div>
       </div>
-      <h1><span class="drop-c">C</span><span class="drop-c">MI</span> <span class="word-connect"><span class="drop-c">C</span>onnect</span></h1>
+      <h1><span class="drop-c">C</span><span class="drop-c">MI</span> <span class="word-connect"><span class="drop-c">C</span><span class="drop-c">onnect</span></span></h1>
       <div class="scroll-cue" id="scrollCue" aria-hidden="false" role="button" tabindex="0" aria-label="Find alumni">
         <span class="scroll-cue-label">Find alumni</span>
         <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
@@ -1077,14 +1085,24 @@ const MARKETING_AREA_DISPLAY_OVERRIDES = {
   "Marketing analytics & data science": "Marketing Analytics & Data Science",
   "Media buying": "Media Buying",
   "Product (marketing, management or strategy)": "Product",
-  "Public relations & communications": "Public Relations & Communications",
+  "Public relations & communications": "PR & Communications",
   "Social media & influencer marketing": "Social Media & Influencer Marketing",
-  "Strategy and consulting": "Strategy and Consulting"
+  "Strategy and consulting": "Strategy & Consulting"
 };
 
 function marketingAreaDisplayLabel(value){
   return MARKETING_AREA_DISPLAY_OVERRIDES[value] || value;
 }
+
+// Shortenings that apply only to the masthead title shown after clicking a
+// category option - the category list itself and the filter checkboxes
+// still show the full name. Keyed by whatever's already been through the
+// category's own display-label step (e.g. marketingAreaDisplayLabel), so
+// use that transformed spelling here, not necessarily the raw value.
+const MASTHEAD_LABEL_OVERRIDES = {
+  "Consumer Packaged Goods (CPG)": "CPG",
+  "Brand Management/Strategy": "Brand"
+};
 const FILTER_ALLOW_LISTS = {
   marketingAreas: CANONICAL_MARKETING_AREAS,
   topics: KNOWN_OPTIONS.topics
@@ -1497,6 +1515,22 @@ function joinValues(values, transform){
   return values.map(v => `<span>${fn(v)}</span>`).join('<span class="sep">·</span>');
 }
 
+// A handful of alumni selected all three format checkboxes, including the
+// redundant "Both ... and virtual" option alongside its own two halves -
+// e.g. ["In person (Evanston/Chicago)", "Virtual", "Both ... and virtual"].
+// Collapse that specific combination down to just the "Both" option on the
+// card display, since listing all three is redundant. Filtering/matching
+// still uses the raw, uncollapsed array.
+function cardFormatValues(formatArr){
+  const both = "Both in person (Evanston/Chicago) and virtual";
+  const inPerson = "In person (Evanston/Chicago)";
+  const virtual = "Virtual";
+  if(formatArr.includes(both) && formatArr.includes(inPerson) && formatArr.includes(virtual)){
+    return [both];
+  }
+  return formatArr;
+}
+
 // Some "topics" option text was written to face the alum filling out the
 // form (e.g. "your role") rather than the student reading the site. Only
 // list entries that actually need rewriting - anything not listed here
@@ -1577,7 +1611,7 @@ function renderGrid(){
           </button>
         </div>
       </div>
-      ${a.format.length ? `<div class="tag-line"><span class="label">Meeting format</span><span class="values">${joinValues(a.format)}</span></div>` : ''}
+      ${a.format.length ? `<div class="tag-line"><span class="label">Meeting format</span><span class="values">${joinValues(cardFormatValues(a.format))}</span></div>` : ''}
       ${a.alsoMeetsIn.length ? `<div class="tag-line"><span class="label">Also meets in</span><span class="values">${joinValues(a.alsoMeetsIn)}</span></div>` : ''}
       ${a.brandAgency ? `<div class="tag-line"><span class="label">Type of experience</span><span class="values">${brandAgencyDisplayLabel(a.brandAgency)}</span></div>` : ''}
       ${a.industries.length ? `<div class="tag-line"><span class="label">Industries worked in</span><span class="values">${joinValues(a.industries)}</span></div>` : ''}
@@ -1835,7 +1869,8 @@ function showCategoryPicker(key, fromHistory){
     btn.addEventListener('click', () => {
       FILTERABLE.forEach(k => filterState[k] = new Set());
       filterState[key] = new Set([btn.dataset.value]);
-      const displayLabel = key === 'marketingAreas' ? marketingAreaDisplayLabel(btn.dataset.value) : btn.dataset.value;
+      let displayLabel = key === 'marketingAreas' ? marketingAreaDisplayLabel(btn.dataset.value) : btn.dataset.value;
+      displayLabel = MASTHEAD_LABEL_OVERRIDES[displayLabel] || displayLabel;
       showListing(displayLabel, false, key, btn.dataset.value);
     });
   });
