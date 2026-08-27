@@ -944,6 +944,24 @@ const CANONICAL_INDUSTRIES = [
   "Sports & Sports Marketing", "Startups", "Tech/SaaS", "Travel & Hospitality",
   "Utilities"
 ];
+// Unlike industries/format above, "Other" write-ins for marketing areas and
+// topics stay visible on each alum's own card - they're only excluded from
+// the filter checkbox lists below, via FILTER_ALLOW_LISTS. "Change
+// Management" and "Corporate management; legal marketing" are confirmed
+// write-ins, not real checkbox options, so they're left out here.
+const CANONICAL_MARKETING_AREAS = [
+  "Brand management / brand strategy", "Content marketing & copywriting",
+  "Customer experience (CX) / lifecycle marketing",
+  "Digital marketing & performance marketing", "Growth marketing",
+  "Market research & consumer insights", "Marketing analytics & data science",
+  "Media buying", "Product (marketing, management or strategy)",
+  "Public relations & communications", "Social media & influencer marketing",
+  "Strategy and consulting"
+];
+const FILTER_ALLOW_LISTS = {
+  marketingAreas: CANONICAL_MARKETING_AREAS,
+  topics: KNOWN_OPTIONS.topics
+};
 function extractCities(formatValues){
   const found = new Set();
   formatValues.forEach(val => {
@@ -1197,7 +1215,12 @@ function collectFilterOptions(){
   FILTERABLE.forEach(key => options[key] = new Set());
   alumni.forEach(a => {
     FILTERABLE.forEach(key => {
-      fieldValues(a, key).forEach(v => v && options[key].add(v));
+      const allowList = FILTER_ALLOW_LISTS[key];
+      fieldValues(a, key).forEach(v => {
+        if(!v) return;
+        if(allowList && !allowList.includes(v)) return;
+        options[key].add(v);
+      });
     });
   });
   return options;
