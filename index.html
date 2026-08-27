@@ -537,6 +537,13 @@ main{ padding: 8px 6vw 40px; }
 }
 
 @media (min-width: 860px){
+  .hero-top{
+    /* 51.3vw = width / 1.947, the hero photo's own aspect ratio. Capping
+       height there guarantees the container is never narrower (relative
+       to its height) than the photo, so "cover" only ever crops the top/
+       bottom - never the left/right edges - on laptop-width screens. */
+    min-height: clamp(560px, min(82vh, 51.3vw), 860px);
+  }
   .listing-layout{
     grid-template-columns: 220px 1fr;
     gap: 40px;
