@@ -604,6 +604,21 @@ main{ padding: 8px 6vw 40px; }
 }
 .tag-line .values{ display: block; color: var(--ink); font-size: 13px; }
 .tag-line .sep{ color: var(--ink); margin: 0 5px; }
+.tag-line .topic-tags{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 3px;
+}
+.topic-tag{
+  display: inline-block;
+  font-size: 12px;
+  color: var(--muted);
+  border: 1px solid var(--line-strong);
+  border-radius: 20px;
+  padding: 3px 10px;
+  line-height: 1.4;
+}
 
 .card-action{ text-align: right; }
 .add-btn{
@@ -739,7 +754,7 @@ main{ padding: 8px 6vw 40px; }
       <div class="landing-options" id="landingOptions">
         <button class="landing-option" data-action="category" data-key="marketingAreas">Alumni by marketing area</button>
         <button class="landing-option" data-action="category" data-key="industries">Alumni by industry</button>
-        <button class="landing-option" data-action="all">Show me all available alumni</button>
+        <button class="landing-option" data-action="all">All available alumni</button>
       </div>
 
       <span class="round-note" id="roundNote">Loading round info…</span>
@@ -1350,7 +1365,10 @@ function buildFilterPanel(){
         renderGrid();
       };
       optionLabel.appendChild(checkbox);
-      optionLabel.appendChild(document.createTextNode(key === 'topics' ? topicDisplayLabel(val) : val));
+      let displayVal = val;
+      if(key === 'topics') displayVal = topicDisplayLabel(val);
+      else if(key === 'brandAgency') displayVal = brandAgencyDisplayLabel(val);
+      optionLabel.appendChild(document.createTextNode(displayVal));
       optionCheckboxes.push(checkbox);
       optionsList.appendChild(optionLabel);
     });
@@ -1397,6 +1415,42 @@ function topicDisplayLabel(value){
   return TOPIC_DISPLAY_OVERRIDES[value] || value;
 }
 
+// Short tag versions of the known "topics" options, for the "Can advise on"
+// line on each card - the full sentences read as redundant/cluttered once
+// several are listed side by side. A custom "Other" write-in isn't in this
+// map, so it falls back to being shown in full (there's no safe way to
+// auto-shorten arbitrary text).
+const TOPIC_SHORT_LABELS = {
+  "The day-to-day of their role or field": "Day-to-day of the role",
+  "Insight into their specific company or organization": "Their company",
+  "Insight into a specific industry or function, regardless of company": "Industry insight",
+  "Advice on how to break into a competitive field or role": "Breaking into the field",
+  "How they navigated a career pivot or took a non-traditional path": "Career pivot",
+  "Perspective from someone with a similar background/identity to students": "Similar background",
+  "Ongoing mentorship, not just a one-time conversation": "Ongoing mentorship",
+  "Experience as an international student": "International student",
+  "Having full-time professional experience before IMC and transitioning into a new role": "Career transition"
+};
+
+function topicShortLabel(value){
+  return TOPIC_SHORT_LABELS[topicDisplayLabel(value)] || topicDisplayLabel(value);
+}
+
+// "Agency-side (working at an agency serving multiple clients)" and its
+// brand-side counterpart read as unnecessarily explained - every IMC
+// student already knows the distinction. Shortened for both the filter
+// checkboxes and each alum's card; the raw value (with the full
+// parenthetical) is still what's stored and matched against filters.
+const BRAND_AGENCY_DISPLAY_OVERRIDES = {
+  "Agency-side (working at an agency serving multiple clients)": "Agency-side",
+  "Brand-side (in-house at a company, e.g., marketing team at a tech company)": "Brand-side",
+  "Both": "Both agency and brand-side"
+};
+
+function brandAgencyDisplayLabel(value){
+  return BRAND_AGENCY_DISPLAY_OVERRIDES[value] || value;
+}
+
 function renderGrid(){
   const grid = document.getElementById('grid');
   const filtered = alumni.filter(matchesFilters);
@@ -1419,9 +1473,9 @@ function renderGrid(){
         <div class="alum-company">${a.company}</div>
         ${a.format.length ? `<div class="tag-line"><span class="label">Meeting format</span><span class="values">${joinValues(a.format)}</span></div>` : ''}
         ${a.alsoMeetsIn.length ? `<div class="tag-line"><span class="label">Also meets in</span><span class="values">${joinValues(a.alsoMeetsIn)}</span></div>` : ''}
-        ${a.brandAgency ? `<div class="tag-line"><span class="label">Type of experience</span><span class="values">${a.brandAgency}</span></div>` : ''}
+        ${a.brandAgency ? `<div class="tag-line"><span class="label">Type of experience</span><span class="values">${brandAgencyDisplayLabel(a.brandAgency)}</span></div>` : ''}
         ${a.industries.length ? `<div class="tag-line"><span class="label">Industries worked in</span><span class="values">${joinValues(a.industries)}</span></div>` : ''}
-        ${a.topics.length ? `<div class="tag-line"><span class="label">Can advise on</span><span class="values">${joinValues(a.topics, topicDisplayLabel)}</span></div>` : ''}
+        ${a.topics.length ? `<div class="tag-line"><span class="label">Can advise on</span><span class="topic-tags">${a.topics.map(t => `<span class="topic-tag">${topicShortLabel(t)}</span>`).join('')}</span></div>` : ''}
       </div>
       <div class="card-action">
         <button class="add-btn ${inCart ? 'added' : ''}" data-id="${a.id}">
