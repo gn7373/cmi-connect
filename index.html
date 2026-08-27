@@ -580,6 +580,12 @@ main{ padding: 8px 6vw 40px; }
   font-size: 26.25px;
   letter-spacing: -0.005em;
 }
+.alum-role{
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+  margin-top: 4px;
+}
 .alum-company{
   font-size: 13.5px;
   font-style: italic;
@@ -893,6 +899,7 @@ const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQzxeSvTj
 //    wording exactly, since that's what becomes the column header).
 const COLUMNS = {
   name:          "Name",
+  role:          "Current role. (If in between jobs, please state your most recent role and your incoming role.)",
   company:       "Current company. (If in between jobs, please share the last company at which you worked.)",
   format:        "Which of these networking formats are you able to facilitate?",
   industries:    "In which of these industries do you have experience? (Select all that apply)",
@@ -1221,6 +1228,7 @@ function normalizeRow(row, index){
   return {
     id: index,
     name: (row[COLUMNS.name] || "").trim(),
+    role: (row[COLUMNS.role] || "").trim(),
     company: (row[COLUMNS.company] || "").trim(),
     // "Other" write-ins are dropped from these two fields, per request -
     // alsoMeetsIn is computed from the raw (unfiltered) format list first,
@@ -1470,6 +1478,7 @@ function renderGrid(){
     row.innerHTML = `
       <div>
         <div class="alum-name">${a.name}</div>
+        ${a.role ? `<div class="alum-role">${a.role}</div>` : ''}
         <div class="alum-company">${a.company}</div>
         ${a.format.length ? `<div class="tag-line"><span class="label">Meeting format</span><span class="values">${joinValues(a.format)}</span></div>` : ''}
         ${a.alsoMeetsIn.length ? `<div class="tag-line"><span class="label">Also meets in</span><span class="values">${joinValues(a.alsoMeetsIn)}</span></div>` : ''}
