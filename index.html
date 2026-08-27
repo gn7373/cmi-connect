@@ -1614,6 +1614,7 @@ document.getElementById('clearFiltersBtn').addEventListener('click', () => {
   FILTERABLE.forEach(key => filterState[key] = new Set());
   document.getElementById('searchInput').value = '';
   document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  buildFilterPanel();
   renderGrid();
 });
 
