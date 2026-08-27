@@ -1250,12 +1250,36 @@ const CATEGORY_PROMPTS = {
 
 const INDUSTRY_DISCLAIMER = "We asked alumni to select the industries they've worked in. They may not be working in this industry right now. If you're interested in a specific industry, please verify it matches their company.";
 
+// Most filter categories read fine sorted alphabetically, but these three
+// have a natural order alphabetical sorting doesn't respect (chronological
+// months, or a deliberate "Both" belongs last vs the two specific sides).
+const CATEGORY_ORDER = {
+  availability: ["September", "October", "November", "December", "Into 2027"],
+  brandAgency: [
+    "Agency-side (working at an agency serving multiple clients)",
+    "Brand-side (in-house at a company, e.g., marketing team at a tech company)",
+    "Both"
+  ],
+  format: CANONICAL_FORMAT_OPTIONS
+};
+function sortFilterValues(key, values){
+  const order = CATEGORY_ORDER[key];
+  if(!order) return [...values].sort();
+  return [...values].sort((a, b) => {
+    const ia = order.indexOf(a), ib = order.indexOf(b);
+    if(ia === -1 && ib === -1) return a.localeCompare(b);
+    if(ia === -1) return 1;
+    if(ib === -1) return -1;
+    return ia - ib;
+  });
+}
+
 function buildFilterPanel(){
   const options = collectFilterOptions();
   const panel = document.getElementById('filterPanel');
   panel.innerHTML = '';
   FILTERABLE.forEach(key => {
-    const values = [...options[key]].sort();
+    const values = sortFilterValues(key, options[key]);
     if(values.length === 0) return;
     const group = document.createElement('div');
     group.className = 'filter-group';
