@@ -997,6 +997,30 @@ const CANONICAL_MARKETING_AREAS = [
   "Public relations & communications", "Social media & influencer marketing",
   "Strategy and consulting"
 ];
+
+// Standardized, mixed-case display text for the marketing areas above -
+// shown in the category picker, the filter checkboxes, and each card's
+// "Marketing expertise" line. The raw value (left column) is still what's
+// stored and matched against filters; only the label changes. A write-in
+// isn't in this map and falls back to showing as stored.
+const MARKETING_AREA_DISPLAY_OVERRIDES = {
+  "Brand management / brand strategy": "Brand Management/Strategy",
+  "Content marketing & copywriting": "Content Marketing & Copywriting",
+  "Customer experience (CX) / lifecycle marketing": "Customer Experience (CX)",
+  "Digital marketing & performance marketing": "Digital & Performance Marketing",
+  "Growth marketing": "Growth Marketing",
+  "Market research & consumer insights": "Market Research & Consumer Insights",
+  "Marketing analytics & data science": "Marketing Analytics & Data Science",
+  "Media buying": "Media Buying",
+  "Product (marketing, management or strategy)": "Product",
+  "Public relations & communications": "Public Relations & Communications",
+  "Social media & influencer marketing": "Social Media & Influencer Marketing",
+  "Strategy and consulting": "Strategy and Consulting"
+};
+
+function marketingAreaDisplayLabel(value){
+  return MARKETING_AREA_DISPLAY_OVERRIDES[value] || value;
+}
 const FILTER_ALLOW_LISTS = {
   marketingAreas: CANONICAL_MARKETING_AREAS,
   topics: KNOWN_OPTIONS.topics
@@ -1376,6 +1400,7 @@ function buildFilterPanel(){
       let displayVal = val;
       if(key === 'topics') displayVal = topicDisplayLabel(val);
       else if(key === 'brandAgency') displayVal = brandAgencyDisplayLabel(val);
+      else if(key === 'marketingAreas') displayVal = marketingAreaDisplayLabel(val);
       optionLabel.appendChild(document.createTextNode(displayVal));
       optionCheckboxes.push(checkbox);
       optionsList.appendChild(optionLabel);
@@ -1484,7 +1509,7 @@ function renderGrid(){
         ${a.alsoMeetsIn.length ? `<div class="tag-line"><span class="label">Also meets in</span><span class="values">${joinValues(a.alsoMeetsIn)}</span></div>` : ''}
         ${a.brandAgency ? `<div class="tag-line"><span class="label">Type of experience</span><span class="values">${brandAgencyDisplayLabel(a.brandAgency)}</span></div>` : ''}
         ${a.industries.length ? `<div class="tag-line"><span class="label">Industries worked in</span><span class="values">${joinValues(a.industries)}</span></div>` : ''}
-        ${a.marketingAreas.length ? `<div class="tag-line"><span class="label">Marketing areas</span><span class="values">${joinValues(a.marketingAreas)}</span></div>` : ''}
+        ${a.marketingAreas.length ? `<div class="tag-line"><span class="label">Marketing expertise</span><span class="values">${joinValues(a.marketingAreas, marketingAreaDisplayLabel)}</span></div>` : ''}
         ${a.topics.length ? `<div class="tag-line"><span class="label">Can advise on</span><span class="topic-tags">${a.topics.map(t => `<span class="topic-tag">${topicShortLabel(t)}</span>`).join('')}</span></div>` : ''}
       </div>
       <div class="card-action">
@@ -1731,12 +1756,16 @@ function showCategoryPicker(key, fromHistory){
   const options = collectFilterOptions();
   const values = [...(options[key] || [])].sort();
   const list = document.getElementById('categoryList');
-  list.innerHTML = values.map(v => `<button class="category-option" data-key="${key}" data-value="${v.replace(/"/g,'&quot;')}">${v}</button>`).join('');
+  list.innerHTML = values.map(v => {
+    const displayText = key === 'marketingAreas' ? marketingAreaDisplayLabel(v) : v;
+    return `<button class="category-option" data-key="${key}" data-value="${v.replace(/"/g,'&quot;')}">${displayText}</button>`;
+  }).join('');
   list.querySelectorAll('.category-option').forEach(btn => {
     btn.addEventListener('click', () => {
       FILTERABLE.forEach(k => filterState[k] = new Set());
       filterState[key] = new Set([btn.dataset.value]);
-      showListing(btn.dataset.value, false, key, btn.dataset.value);
+      const displayLabel = key === 'marketingAreas' ? marketingAreaDisplayLabel(btn.dataset.value) : btn.dataset.value;
+      showListing(displayLabel, false, key, btn.dataset.value);
     });
   });
   if(!fromHistory) pushHistory({view:'category', key});
