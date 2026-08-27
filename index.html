@@ -1559,7 +1559,7 @@ function updateCartBarVisibility(){
 
 const INFO_TAB_LABELS = { about: 'About', faq: 'FAQ', feedback: 'Feedback' };
 
-function showInfo(tab){
+function showInfo(tab, fromHistory){
   window.scrollTo(0, 0);
   if(currentView !== 'info'){
     viewBeforeInfo = currentView;
@@ -1573,6 +1573,7 @@ function showInfo(tab){
   document.getElementById('view-info').style.display = '';
   updateCartBarVisibility();
   selectInfoTab(tab);
+  if(!fromHistory) pushHistory({view:'info', tab, viewBeforeInfo, lastCategoryKey, subTitleBeforeInfo});
 }
 
 function selectInfoTab(tab){
@@ -1613,7 +1614,7 @@ window.addEventListener('resize', () => {
   if(currentView === 'info') alignAboutToFeedbackTab();
 });
 
-function showLanding(){
+function showLanding(fromHistory){
   window.scrollTo(0, 0);
   currentView = 'landing';
   lastCategoryKey = null;
@@ -1623,9 +1624,10 @@ function showLanding(){
   document.getElementById('view-listing').style.display = 'none';
   document.getElementById('view-info').style.display = 'none';
   updateCartBarVisibility();
+  if(!fromHistory) pushHistory({view:'landing'});
 }
 
-function showCategoryPicker(key){
+function showCategoryPicker(key, fromHistory){
   window.scrollTo(0, 0);
   currentView = 'category';
   lastCategoryKey = key;
@@ -1645,12 +1647,13 @@ function showCategoryPicker(key){
     btn.addEventListener('click', () => {
       FILTERABLE.forEach(k => filterState[k] = new Set());
       filterState[key] = new Set([btn.dataset.value]);
-      showListing(btn.dataset.value);
+      showListing(btn.dataset.value, false, key, btn.dataset.value);
     });
   });
+  if(!fromHistory) pushHistory({view:'category', key});
 }
 
-function showListing(contextLabel){
+function showListing(contextLabel, fromHistory, categoryKey, categoryValue){
   window.scrollTo(0, 0);
   currentView = 'listing';
   document.getElementById('heroLanding').style.display = 'none';
@@ -1664,6 +1667,7 @@ function showListing(contextLabel){
   document.body.classList.add('has-cart-bar');
   buildFilterPanel();
   renderGrid();
+  if(!fromHistory) pushHistory({view:'listing', contextLabel, categoryKey, categoryValue});
 }
 
 document.getElementById('landingOptions').addEventListener('click', (e) => {
@@ -1697,6 +1701,37 @@ document.getElementById('backBtn').addEventListener('click', () => {
     }
   }
 });
+
+// So the browser's own Back/Forward buttons work as a second way to move
+// between pages, not just the site's own "← Back" link. Every page-level
+// transition above pushes a history entry (skipped when fromHistory is set,
+// i.e. when we're the ones restoring a popstate rather than navigating
+// fresh, so this can't create an infinite loop of pushes).
+function pushHistory(state){
+  history.pushState(state, '', location.href);
+}
+window.addEventListener('popstate', (e) => {
+  const state = e.state;
+  if(!state){ showLanding(true); return; }
+  if(state.view === 'landing'){
+    showLanding(true);
+  } else if(state.view === 'category'){
+    showCategoryPicker(state.key, true);
+  } else if(state.view === 'listing'){
+    if(state.categoryKey){
+      FILTERABLE.forEach(k => filterState[k] = new Set());
+      filterState[state.categoryKey] = new Set([state.categoryValue]);
+    }
+    lastCategoryKey = state.categoryKey || null;
+    showListing(state.contextLabel, true, state.categoryKey, state.categoryValue);
+  } else if(state.view === 'info'){
+    viewBeforeInfo = state.viewBeforeInfo;
+    lastCategoryKey = state.lastCategoryKey;
+    subTitleBeforeInfo = state.subTitleBeforeInfo;
+    showInfo(state.tab, true);
+  }
+});
+history.replaceState({view:'landing'}, '', location.href);
 
 function revealHeroOptions(){
   const heroTitle = document.querySelector('#heroTop h1');
