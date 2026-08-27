@@ -528,8 +528,6 @@ header.site p{
 
 /* ---------- LISTING ---------- */
 main{ padding: 8px 6vw 40px; }
-#grid{ max-width: 900px; }
-
 .listing-layout{
   display: grid;
   grid-template-columns: 1fr;
@@ -567,12 +565,14 @@ main{ padding: 8px 6vw 40px; }
 .alum-row{
   padding: 30px 0;
   border-top: 1px solid var(--line);
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 20px;
-  align-items: start;
 }
 .alum-row:last-child{ border-bottom: 1px solid var(--line); }
+.alum-header{
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+}
 
 .alum-name{
   font-family: 'Fraunces', serif;
@@ -641,8 +641,7 @@ main{ padding: 8px 6vw 40px; }
 .add-btn.added:hover{ color: #fff; }
 
 @media (max-width: 700px){
-  .alum-row{ grid-template-columns: 1fr; }
-  .card-action{ text-align: left; margin-top: 16px; }
+  .alum-header{ flex-direction: column; align-items: flex-start; gap: 12px; }
 }
 
 .empty-state{
@@ -1501,22 +1500,24 @@ function renderGrid(){
     const row = document.createElement('div');
     row.className = 'alum-row';
     row.innerHTML = `
-      <div>
-        <div class="alum-name">${a.name}</div>
-        ${a.role ? `<div class="alum-role">${a.role}</div>` : ''}
-        <div class="alum-company">${a.company}</div>
-        ${a.format.length ? `<div class="tag-line"><span class="label">Meeting format</span><span class="values">${joinValues(a.format)}</span></div>` : ''}
-        ${a.alsoMeetsIn.length ? `<div class="tag-line"><span class="label">Also meets in</span><span class="values">${joinValues(a.alsoMeetsIn)}</span></div>` : ''}
-        ${a.brandAgency ? `<div class="tag-line"><span class="label">Type of experience</span><span class="values">${brandAgencyDisplayLabel(a.brandAgency)}</span></div>` : ''}
-        ${a.industries.length ? `<div class="tag-line"><span class="label">Industries worked in</span><span class="values">${joinValues(a.industries)}</span></div>` : ''}
-        ${a.marketingAreas.length ? `<div class="tag-line"><span class="label">Marketing expertise</span><span class="values">${joinValues(a.marketingAreas, marketingAreaDisplayLabel)}</span></div>` : ''}
-        ${a.topics.length ? `<div class="tag-line"><span class="label">Can advise on</span><span class="topic-tags">${a.topics.map(t => `<span class="topic-tag">${topicShortLabel(t)}</span>`).join('')}</span></div>` : ''}
+      <div class="alum-header">
+        <div>
+          <div class="alum-name">${a.name}</div>
+          ${a.role ? `<div class="alum-role">${a.role}</div>` : ''}
+          <div class="alum-company">${a.company}</div>
+        </div>
+        <div class="card-action">
+          <button class="add-btn ${inCart ? 'added' : ''}" data-id="${a.id}">
+            ${inCart ? `✓ Pick #${pickIndex+1}` : 'Add to my picks'}
+          </button>
+        </div>
       </div>
-      <div class="card-action">
-        <button class="add-btn ${inCart ? 'added' : ''}" data-id="${a.id}">
-          ${inCart ? `✓ Pick #${pickIndex+1}` : 'Add to my picks'}
-        </button>
-      </div>
+      ${a.format.length ? `<div class="tag-line"><span class="label">Meeting format</span><span class="values">${joinValues(a.format)}</span></div>` : ''}
+      ${a.alsoMeetsIn.length ? `<div class="tag-line"><span class="label">Also meets in</span><span class="values">${joinValues(a.alsoMeetsIn)}</span></div>` : ''}
+      ${a.brandAgency ? `<div class="tag-line"><span class="label">Type of experience</span><span class="values">${brandAgencyDisplayLabel(a.brandAgency)}</span></div>` : ''}
+      ${a.industries.length ? `<div class="tag-line"><span class="label">Industries worked in</span><span class="values">${joinValues(a.industries)}</span></div>` : ''}
+      ${a.marketingAreas.length ? `<div class="tag-line"><span class="label">Marketing expertise</span><span class="values">${joinValues(a.marketingAreas, marketingAreaDisplayLabel)}</span></div>` : ''}
+      ${a.topics.length ? `<div class="tag-line"><span class="label">Can advise on</span><span class="topic-tags">${a.topics.map(t => `<span class="topic-tag">${topicShortLabel(t)}</span>`).join('')}</span></div>` : ''}
     `;
     grid.appendChild(row);
   });
