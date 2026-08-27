@@ -68,10 +68,13 @@ header.site{
    of the image - the 38% anchor tuned for the tall hero crops out the
    tower tops here. Raised specifically for this shorter box. */
 header.site.masthead-mode{
-  /* Measured the tower tips directly in the source photo (~12% down)
-     and solved for the anchor that starts the visible crop right at
-     that point on a typical laptop width, instead of guessing. */
-  background-position: center 20%;
+  /* Measured the main roofline directly in the source photo (~30.5%
+     down, consistent across the central span away from the towers)
+     and solved for the anchor that starts the visible crop right
+     there on a typical laptop width - a steadier, more balanced band
+     (roofline through most of the windows) than starting at the
+     tower tips, which left an odd sliver of bare sky up top. */
+  background-position: center 50.5%;
 }
 .hero-top{
   width: 100%;
@@ -306,8 +309,11 @@ header.site h1{
   /* Now that "MI" and "onnect" both match their drop-cap C at 2em,
      the whole nowrap line is roughly twice as wide per character as
      when this clamp was tuned for just two oversized letters - scaled
-     down accordingly so "CMI CONNECT" fits on one line on laptop. */
-  font-size: clamp(30px, 7vw, 100px);
+     down accordingly so "CMI CONNECT" fits on one line on laptop.
+     Capped at 88px (not 100px) to leave real margin now that "CMI"
+     itself renders 1.15x bigger still - 100px left zero breathing
+     room on either edge. */
+  font-size: clamp(30px, 7vw, 88px);
   line-height: 1;
   white-space: nowrap;
   position: relative;
@@ -319,6 +325,7 @@ header.site h1{
      "Connect" reads as barely a gap at all - almost one word. Adds
      real breathing room on laptop, where both sit on one line. */
   margin-right: 0.18em;
+  font-size: 1.15em;
 }
 @media (max-width: 700px){
   header.site h1{
@@ -333,7 +340,7 @@ header.site h1{
     font-size: clamp(30px, 9vw, 40px);
   }
   .word-connect{ display: block; }
-  .word-cmi{ font-size: 1.15em; margin-right: 0; }
+  .word-cmi{ margin-right: 0; }
 }
 #heroLanding{
   text-align: center;
