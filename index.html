@@ -148,11 +148,12 @@ header.site.masthead-mode{
 
 .info-layout{
   display: grid;
-  grid-template-columns: max-content 1fr;
+  grid-template-columns: max-content 1fr max-content;
   gap: 80px;
   padding: 12px 24px 60px;
   align-items: start;
 }
+.info-tabs-spacer{ visibility: hidden; pointer-events: none; }
 @media (max-width: 700px){
   .info-layout{ grid-template-columns: 1fr; }
 }
@@ -966,6 +967,15 @@ body.has-cart-bar .toast{ bottom: 92px; }
         <div class="feedback-error" id="feedbackError">Type something before sending.</div>
         <button class="feedback-send" id="feedbackSend">Send feedback</button>
       </div>
+    </div>
+    <!-- Invisible mirror of the tabs sidebar so the grid has matching
+         max-content columns on both sides - without this, the content
+         column's own center sits well right of true viewport center,
+         since only the left sidebar was eating width. -->
+    <div class="info-tabs info-tabs-spacer" aria-hidden="true">
+      <button class="info-tab" tabindex="-1">About</button>
+      <button class="info-tab" tabindex="-1">FAQ</button>
+      <button class="info-tab" tabindex="-1">Feedback</button>
     </div>
   </div>
 </div>
