@@ -123,7 +123,7 @@ header.site.masthead-mode{
   display: flex;
   gap: 40px;
 }
-.top-bar-light{ position: absolute; top: 0; right: 24px; left: auto; }
+.top-bar-light{ position: absolute; top: 32px; right: 6vw; left: auto; }
 .top-bar-light .top-tabs{ gap: 24px; }
 .top-bar-light .tab-link{ font-size: 14px; }
 .tab-link-light{ color: var(--accent-light) !important; }
@@ -854,7 +854,7 @@ main{ padding: 8px 6vw 40px; }
   display:none;
 }
 .toast.show{ display:block; }
-.toast.toast-success{ background: var(--success); }
+.toast.toast-success{ background: var(--success); white-space: nowrap; }
 /* On the alumni listing page a sticky cart bar sits at the very
    bottom, so the toast needs to clear it there - everywhere else
    (like this feedback page, with nothing fixed below) it can sit
@@ -1697,10 +1697,16 @@ function renderGrid(){
   });
 }
 
-function showToast(msg, type){
+function showToast(msg, type, alignEl){
   const toast = document.getElementById('toast');
   toast.textContent = msg;
   toast.className = 'toast show' + (type === 'success' ? ' toast-success' : '');
+  if(alignEl){
+    const rect = alignEl.getBoundingClientRect();
+    toast.style.left = Math.round(rect.left + rect.width / 2) + 'px';
+  } else {
+    toast.style.left = '';
+  }
   const duration = type === 'success' ? 5000 : 3000;
   setTimeout(() => toast.classList.remove('show'), duration);
 }
@@ -2067,7 +2073,7 @@ document.getElementById('feedbackSend').addEventListener('click', () => {
   document.getElementById('feedbackEntryInput').value = text;
   document.getElementById('feedbackFormPost').submit();
   textArea.value = '';
-  showToast('Feedback sent. Thank you!', 'success');
+  showToast('Feedback sent. Thank you!', 'success', document.getElementById('feedbackSend'));
 });
 
 document.querySelectorAll('.faq-item').forEach(item => {
