@@ -849,10 +849,12 @@ main{ padding: 8px 6vw 40px; }
   color: #fff;
   padding: 11px 20px;
   font-size: 13px;
+  text-align: center;
   z-index: 30;
   display:none;
 }
 .toast.show{ display:block; }
+.toast.toast-success{ background: var(--success); }
 </style>
 </head>
 <body>
@@ -1689,11 +1691,12 @@ function renderGrid(){
   });
 }
 
-function showToast(msg){
+function showToast(msg, type){
   const toast = document.getElementById('toast');
   toast.textContent = msg;
-  toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 3000);
+  toast.className = 'toast show' + (type === 'success' ? ' toast-success' : '');
+  const duration = type === 'success' ? 5000 : 3000;
+  setTimeout(() => toast.classList.remove('show'), duration);
 }
 
 function toggleCart(id){
@@ -2058,7 +2061,7 @@ document.getElementById('feedbackSend').addEventListener('click', () => {
   document.getElementById('feedbackEntryInput').value = text;
   document.getElementById('feedbackFormPost').submit();
   textArea.value = '';
-  showToast('Feedback sent — thank you!');
+  showToast('Feedback sent. Thank you!', 'success');
 });
 
 document.querySelectorAll('.faq-item').forEach(item => {
