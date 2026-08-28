@@ -41,6 +41,7 @@ body.has-cart-bar{
   padding-bottom: 96px;
 }
 :focus-visible{ outline: 2px solid var(--accent); outline-offset: 2px; }
+#submitBtn:focus-visible{ outline-color: var(--success); }
 a{ color: var(--accent-light); }
 em, .ital{ font-style: italic; }
 
@@ -82,6 +83,13 @@ header.site.masthead-mode{
   width: 100%;
   box-sizing: border-box;
   min-height: clamp(560px, 82vh, 860px);
+  /* Plain vh on mobile browsers is fixed to the "large" viewport (as if
+     the address bar were always collapsed), so it doesn't shrink when
+     the bar is actually showing - that mismatch with .hero-options
+     right below (which already used svh) is what left a strip of the
+     page's own background exposed as the address bar collapsed and
+     expanded during a scroll. svh tracks the real visible height. */
+  min-height: clamp(560px, 82svh, 860px);
   display: flex;
   flex-direction: column;
   align-items: center;
