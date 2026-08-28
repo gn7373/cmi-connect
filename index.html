@@ -1004,6 +1004,16 @@ main{ padding: 8px 6vw 40px; }
 
 <div class="toast" id="toast"></div>
 
+<!-- Submits feedback straight into a Google Sheet, no email client
+     needed - posts to the Form's response endpoint and targets a
+     hidden iframe so the page never navigates away. -->
+<iframe name="feedbackTargetFrame" style="display:none"></iframe>
+<form id="feedbackFormPost"
+      action="https://docs.google.com/forms/d/e/1FAIpQLSc5dBZGKBXoF8V9zsRYp07uf4jBTsUl7rMC_LSjiUmX_3HocQ/formResponse"
+      method="POST" target="feedbackTargetFrame" style="display:none">
+  <input type="text" name="entry.650600712" id="feedbackEntryInput">
+</form>
+
 <script>
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -2037,17 +2047,18 @@ document.querySelectorAll('.info-tab').forEach(btn => {
 });
 
 document.getElementById('feedbackSend').addEventListener('click', () => {
-  const text = document.getElementById('feedbackText').value.trim();
+  const textArea = document.getElementById('feedbackText');
+  const text = textArea.value.trim();
   const error = document.getElementById('feedbackError');
   if(!text){
     error.classList.add('show');
     return;
   }
   error.classList.remove('show');
-  const mailto = `mailto:cmi@example.edu?subject=${encodeURIComponent('CMI Connect Feedback')}&body=${encodeURIComponent(text)}`;
-  window.location.href = mailto;
-  document.getElementById('feedbackText').value = '';
-  document.getElementById('feedbackPanel').classList.remove('open');
+  document.getElementById('feedbackEntryInput').value = text;
+  document.getElementById('feedbackFormPost').submit();
+  textArea.value = '';
+  showToast('Feedback sent — thank you!');
 });
 
 document.querySelectorAll('.faq-item').forEach(item => {
