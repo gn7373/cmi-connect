@@ -842,19 +842,25 @@ main{ padding: 8px 6vw 40px; }
 
 .toast{
   position: fixed;
-  bottom: 92px;
+  bottom: 40px;
   left: 50%;
   transform: translateX(-50%);
   background: var(--warn);
   color: #fff;
-  padding: 11px 20px;
-  font-size: 13px;
+  padding: 14px 26px;
+  font-size: 16px;
   text-align: center;
   z-index: 30;
   display:none;
 }
 .toast.show{ display:block; }
 .toast.toast-success{ background: var(--success); }
+/* On the alumni listing page a sticky cart bar sits at the very
+   bottom, so the toast needs to clear it there - everywhere else
+   (like this feedback page, with nothing fixed below) it can sit
+   closer to the bottom edge instead of floating with dead space
+   under it. */
+body.has-cart-bar .toast{ bottom: 92px; }
 </style>
 </head>
 <body>
