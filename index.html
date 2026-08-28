@@ -22,6 +22,7 @@
   --accent-light: #D9C79A;
   --accent-tint: #F4E9E8;
   --success: #2E4632;
+  --success-on-light: #375A40;
   --line: #E6E1D8;
   --line-strong: #D2CBBD;
   --muted: #6E6860;
@@ -746,9 +747,9 @@ main{ padding: 8px 6vw 40px; }
   cursor:pointer;
   white-space: nowrap;
 }
-.add-btn.added{ background: var(--success); border-color: var(--success); color: #fff; }
+.add-btn.added{ background: var(--success-on-light); border-color: var(--success-on-light); color: #fff; }
 .add-btn:hover{ border-color: var(--accent); color: var(--accent); }
-.add-btn.added:hover{ border-color: var(--success); color: #fff; }
+.add-btn.added:hover{ border-color: var(--success-on-light); color: #fff; }
 
 @media (max-width: 700px){
   .alum-header{ flex-direction: column; align-items: flex-start; gap: 12px; }
@@ -800,7 +801,7 @@ main{ padding: 8px 6vw 40px; }
   background: var(--success);
   color: #fff;
   border: none;
-  padding: 12px 22px;
+  padding: 9px 22px;
   font-size: 13px;
   letter-spacing: 0.02em;
   cursor:pointer;
