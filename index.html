@@ -147,7 +147,6 @@ header.site.masthead-mode{
 .tab-link:hover{ border-bottom-color: var(--accent-light); }
 
 .info-layout{
-  max-width: 900px;
   padding: 12px 6vw 60px;
 }
 .info-panel{ display: none; }
@@ -376,6 +375,21 @@ header.site p{
   .landing-option{ font-size: 20px; }
 }
 
+.top-left-brand{
+  position: absolute;
+  top: 32px;
+  left: 6vw;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+.brand-mark{
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: 19px;
+  letter-spacing: 0.03em;
+  color: var(--accent-light);
+}
 .back-btn{
   background:none;
   border:none;
@@ -383,14 +397,13 @@ header.site p{
   font-size: 19px;
   cursor: pointer;
   padding: 0;
-  position: absolute;
-  left: 24px;
-  bottom: 24px;
   text-decoration: underline;
   text-underline-offset: 3px;
 }
 @media (max-width: 700px){
-  .back-btn{ font-size: 14px; bottom: 16px; }
+  .back-btn{ font-size: 14px; }
+  .brand-mark{ font-size: 14px; }
+  .top-left-brand{ top: 6px; gap: 16px; }
   .top-bar-light{ top: 6px; }
   .top-bar-light .tab-link{ font-size: 14px; }
 }
@@ -881,7 +894,10 @@ body.has-cart-bar .toast{ bottom: 92px; }
         <button class="tab-link tab-link-light" data-nav="feedback">Feedback</button>
       </div>
     </div>
-    <button class="back-btn" id="backBtn">← Back</button>
+    <div class="top-left-brand">
+      <span class="brand-mark">CMI</span>
+      <button class="back-btn" id="backBtn">← Back</button>
+    </div>
     <h2 id="subTitle"></h2>
   </div>
 </header>
