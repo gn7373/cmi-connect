@@ -121,17 +121,15 @@ header.site.masthead-mode{
 }
 .top-tabs{
   display: flex;
-  gap: 40px;
+  gap: 24px;
 }
 .top-bar-light{ position: absolute; top: 32px; right: 6vw; left: auto; }
-.top-bar-light .top-tabs{ gap: 24px; }
-.top-bar-light .tab-link{ font-size: 19px; }
 .tab-link-light{ color: var(--accent-light) !important; }
 .tab-link{
   background: none;
   border: none;
   color: var(--accent-light);
-  font-size: 17px;
+  font-size: 19px;
   font-family: 'Inter', sans-serif;
   font-weight: 500;
   letter-spacing: normal;
@@ -140,9 +138,12 @@ header.site.masthead-mode{
   padding: 4px 0;
   border-bottom: 1px solid transparent;
 }
+/* .top-bar (landing) and .top-bar-light (masthead) share every value
+   here so the nav looks identical - same size, same gap, same
+   position - regardless of which screen you're on. */
 @media (max-width: 700px){
-  .top-bar .tab-link{ font-size: 14px; }
-  .top-bar .top-tabs{ gap: 24px; }
+  .top-bar{ top: 6px; }
+  .tab-link{ font-size: 14px; }
 }
 .tab-link:hover{ border-bottom-color: var(--accent-light); }
 
@@ -375,21 +376,6 @@ header.site p{
   .landing-option{ font-size: 20px; }
 }
 
-.top-left-brand{
-  position: absolute;
-  top: 32px;
-  left: 6vw;
-  display: flex;
-  align-items: center;
-  gap: 44px;
-}
-.brand-mark{
-  font-family: 'Fraunces', serif;
-  font-weight: 600;
-  font-size: 19px;
-  letter-spacing: 0.03em;
-  color: var(--accent-light);
-}
 .back-btn{
   background:none;
   border:none;
@@ -397,15 +383,15 @@ header.site p{
   font-size: 19px;
   cursor: pointer;
   padding: 0;
+  position: absolute;
+  top: 32px;
+  left: 6vw;
   text-decoration: underline;
   text-underline-offset: 3px;
 }
 @media (max-width: 700px){
-  .back-btn{ font-size: 14px; }
-  .brand-mark{ font-size: 14px; }
-  .top-left-brand{ top: 6px; gap: 28px; }
+  .back-btn{ font-size: 14px; top: 6px; }
   .top-bar-light{ top: 6px; }
-  .top-bar-light .tab-link{ font-size: 14px; }
 }
 #heroSub{
   position: relative;
@@ -894,10 +880,7 @@ body.has-cart-bar .toast{ bottom: 92px; }
         <button class="tab-link tab-link-light" data-nav="feedback">Feedback</button>
       </div>
     </div>
-    <div class="top-left-brand">
-      <span class="brand-mark">CMI</span>
-      <button class="back-btn" id="backBtn">← Back</button>
-    </div>
+    <button class="back-btn" id="backBtn">← Back</button>
     <h2 id="subTitle"></h2>
   </div>
 </header>
