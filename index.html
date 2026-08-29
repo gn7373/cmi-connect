@@ -125,7 +125,7 @@ header.site.masthead-mode{
 }
 .top-bar-light{ position: absolute; top: 32px; right: 6vw; left: auto; }
 .top-bar-light .top-tabs{ gap: 24px; }
-.top-bar-light .tab-link{ font-size: 14px; }
+.top-bar-light .tab-link{ font-size: 19px; }
 .tab-link-light{ color: var(--accent-light) !important; }
 .tab-link{
   background: none;
@@ -147,44 +147,12 @@ header.site.masthead-mode{
 .tab-link:hover{ border-bottom-color: var(--accent-light); }
 
 .info-layout{
-  display: grid;
-  grid-template-columns: max-content 1fr max-content;
-  gap: 80px;
+  max-width: 640px;
+  margin: 0 auto;
   padding: 12px 24px 60px;
-  align-items: start;
 }
-.info-tabs-spacer{ visibility: hidden; pointer-events: none; }
-@media (max-width: 700px){
-  .info-layout{ grid-template-columns: 1fr; }
-}
-.info-tabs{
-  display: flex;
-  flex-direction: column;
-}
-.info-tab{
-  text-align: left;
-  background: none;
-  border: none;
-  padding: 64px 4px;
-  font-family: 'Fraunces', serif;
-  font-size: 29px;
-  font-style: italic;
-  color: var(--muted);
-  cursor: pointer;
-  white-space: normal;
-  line-height: 1.15;
-}
-.info-tab.active{ color: var(--accent); }
-.info-tab:hover{ color: var(--accent); }
 .info-panel{ display: none; }
 .info-panel.active{ display: block; }
-@media (max-width: 700px){
-  /* The masthead title and the top-right nav already say which of
-     About/FAQ/Feedback you're on and let you switch - this in-page
-     tab list was just adding ~500px of scrolling before the actual
-     content on a phone, for information already shown twice over. */
-  .info-tabs{ display: none; }
-}
 #feedbackText{
   width: 100%;
   min-height: 100px;
@@ -224,15 +192,15 @@ header.site.masthead-mode{
   text-wrap: pretty;
 }
 .about-body strong{ color: #453F3A; }
-.about-body:first-child{ margin-top: 64px; }
-#feedbackText{ margin-top: 64px; }
+.about-body:first-child{ margin-top: 24px; }
+#feedbackText{ margin-top: 24px; }
 .about-body:last-child{ margin-bottom: 0; }
 
 .faq-item{
   padding: 68px 0;
   border-top: 1px solid var(--line);
 }
-.faq-item:first-child{ border-top: none; padding-top: 64px; }
+.faq-item:first-child{ border-top: none; padding-top: 24px; }
 .faq-q{
   font-weight: 600;
   color: var(--ink);
@@ -424,6 +392,7 @@ header.site p{
 }
 @media (max-width: 700px){
   .back-btn{ font-size: 14px; bottom: 16px; }
+  .top-bar-light .tab-link{ font-size: 14px; }
 }
 #heroSub{
   position: relative;
@@ -923,11 +892,6 @@ body.has-cart-bar .toast{ bottom: 92px; }
 
 <div id="view-info" style="display:none">
   <div class="info-layout">
-    <div class="info-tabs">
-      <button class="info-tab" data-tab="about">About</button>
-      <button class="info-tab" data-tab="faq">FAQ</button>
-      <button class="info-tab" data-tab="feedback">Feedback</button>
-    </div>
     <div class="info-content">
       <div class="info-panel" id="infoPanelAbout">
         <p class="about-body">CMI Connect is a new offering by the Cause Marketing Initiative that aims to provide career-related programming to complement the pro-bono consulting work we engage in early in the year.</p>
@@ -967,15 +931,6 @@ body.has-cart-bar .toast{ bottom: 92px; }
         <div class="feedback-error" id="feedbackError">Type something before sending.</div>
         <button class="feedback-send" id="feedbackSend">Send feedback</button>
       </div>
-    </div>
-    <!-- Invisible mirror of the tabs sidebar so the grid has matching
-         max-content columns on both sides - without this, the content
-         column's own center sits well right of true viewport center,
-         since only the left sidebar was eating width. -->
-    <div class="info-tabs info-tabs-spacer" aria-hidden="true">
-      <button class="info-tab" tabindex="-1">About</button>
-      <button class="info-tab" tabindex="-1">FAQ</button>
-      <button class="info-tab" tabindex="-1">Feedback</button>
     </div>
   </div>
 </div>
@@ -1879,41 +1834,13 @@ function showInfo(tab, fromHistory){
 
 function selectInfoTab(tab){
   document.getElementById('subTitle').textContent = INFO_TAB_LABELS[tab] || 'About';
-  document.querySelectorAll('.info-tab').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.tab === tab);
-  });
   document.querySelectorAll('.info-panel').forEach(panel => {
     panel.classList.remove('active');
   });
   const panelId = 'infoPanel' + tab.charAt(0).toUpperCase() + tab.slice(1);
   const panel = document.getElementById(panelId);
   if(panel) panel.classList.add('active');
-  alignAboutToFeedbackTab();
 }
-
-// The About text should end at the same y-coordinate as the bottom of the
-// Feedback tab in the left column, so the two columns read as evenly
-// matched. Computed live (rather than a fixed px guess) since it depends on
-// how much About copy there is - only meaningful in the two-column desktop
-// layout, so it's a no-op once the tabs stack above the content on narrow
-// screens.
-function alignAboutToFeedbackTab(){
-  const panel = document.getElementById('infoPanelAbout');
-  if(!panel) return;
-  panel.style.paddingBottom = '0px';
-  if(!panel.classList.contains('active')) return;
-  const columns = getComputedStyle(document.querySelector('.info-layout')).gridTemplateColumns.split(' ').length;
-  if(columns < 2) return;
-  const feedbackTab = document.querySelector('.info-tab[data-tab="feedback"]');
-  const paras = panel.querySelectorAll('.about-body');
-  const lastPara = paras[paras.length - 1];
-  if(!feedbackTab || !lastPara) return;
-  const diff = feedbackTab.getBoundingClientRect().bottom - lastPara.getBoundingClientRect().bottom;
-  if(diff > 0) panel.style.paddingBottom = diff + 'px';
-}
-window.addEventListener('resize', () => {
-  if(currentView === 'info') alignAboutToFeedbackTab();
-});
 
 function showLanding(fromHistory){
   window.scrollTo(0, 0);
@@ -2066,9 +1993,6 @@ window.addEventListener('scroll', () => {
 
 document.querySelectorAll('[data-nav]').forEach(btn => {
   btn.addEventListener('click', () => showInfo(btn.dataset.nav));
-});
-document.querySelectorAll('.info-tab').forEach(btn => {
-  btn.addEventListener('click', () => selectInfoTab(btn.dataset.tab));
 });
 
 document.getElementById('feedbackSend').addEventListener('click', () => {
