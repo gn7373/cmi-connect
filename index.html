@@ -483,6 +483,9 @@ header.site p{
   flex: 1 1 280px;
   border-bottom: 1.5px solid var(--ink);
   padding-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 .search-box input{
   border:none; outline:none; background:transparent;
@@ -490,6 +493,12 @@ header.site p{
   color: var(--ink);
 }
 .search-box input::placeholder{ color: var(--muted); }
+.search-btn{
+  background:none; border:none; padding:0; cursor:pointer;
+  color: var(--muted); display:flex; flex-shrink:0;
+}
+.search-btn:hover{ color: var(--ink); }
+.search-btn:focus-visible{ outline: 2px solid var(--accent); outline-offset: 2px; }
 .filter-toggle-btn, .clear-btn{
   background:none;
   border:none;
@@ -955,6 +964,9 @@ body.has-cart-bar .toast{ bottom: 92px; }
   <div class="search-row">
     <div class="search-box">
       <input type="text" id="searchInput" placeholder="Search by name, company, or keyword…">
+      <button class="search-btn" id="searchBtn" aria-label="Search">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </button>
     </div>
     <button class="filter-toggle-btn" id="filterToggleBtn">Filters</button>
   </div>
@@ -1760,6 +1772,7 @@ document.getElementById('submitBtn').addEventListener('click', () => {
 });
 
 document.getElementById('searchInput').addEventListener('input', renderGrid);
+document.getElementById('searchBtn').addEventListener('click', renderGrid);
 
 document.getElementById('filterToggleBtn').addEventListener('click', (e) => {
   const sidebar = document.getElementById('filterSidebar');
