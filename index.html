@@ -677,6 +677,15 @@ main{ padding: 8px 6vw 40px; }
   color: var(--ink);
   margin-top: 4px;
 }
+.alum-linkedin{
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  text-decoration: none;
+  border-bottom: 1px solid var(--line-strong);
+}
+.alum-linkedin:hover{ color: var(--accent); border-color: var(--accent); }
 .alum-company{
   font-size: 13.5px;
   font-style: italic;
@@ -1017,7 +1026,8 @@ const COLUMNS = {
   topics:        "Which of these topics are you comfortable advising students on?",
   availability:  "When would you be available to connect with students? (Select all that apply)",
   capacity:      "How many coffee chats with students can you support this fall? (Please enter a number. If you are unsure of your bandwidth, you can give a conservative estimate.)",
-  notes:         "Is there anything else you'd like to share?"
+  notes:         "Is there anything else you'd like to share?",
+  linkedin:      "Your LinkedIn (optional)"
 };
 
 // 3. Some multi-select option texts contain a comma INSIDE the option
@@ -1384,9 +1394,19 @@ function normalizeRow(row, index){
     brandAgency: (row[COLUMNS.brandAgency] || "").trim(),
     topics: smartSplit(row[COLUMNS.topics], KNOWN_OPTIONS.topics, TOPICS_IS_COMPLETE_LIST),
     availability: smartSplit(row[COLUMNS.availability], KNOWN_OPTIONS.availability),
-    capacity: isNaN(capacity) ? 0 : capacity,
+    // Alumni who submitted before this question existed left it blank;
+    // treat that as an assumed capacity of 2 rather than 0, since 0 would
+    // read as "fully booked" for someone who was never actually asked.
+    capacity: isNaN(capacity) ? 2 : capacity,
     notes: (row[COLUMNS.notes] || "").trim(),
+    linkedin: normalizeLinkedInUrl(row[COLUMNS.linkedin]),
   };
+}
+
+function normalizeLinkedInUrl(raw){
+  const value = (raw || "").trim();
+  if(!value) return "";
+  return /^https?:\/\//i.test(value) ? value : `https://${value}`;
 }
 
 function fieldValues(alum, key){
@@ -1638,7 +1658,7 @@ function renderGrid(){
     row.innerHTML = `
       <div class="alum-header">
         <div>
-          <div class="alum-name">${a.name}</div>
+          <div class="alum-name">${a.name}${a.linkedin ? ` <a class="alum-linkedin" href="${a.linkedin}" target="_blank" rel="noopener">LinkedIn profile ↗</a>` : ''}</div>
           ${a.role ? `<div class="alum-role">${a.role}</div>` : ''}
           <div class="alum-company">${a.company}</div>
         </div>
@@ -1751,6 +1771,11 @@ document.getElementById('clearFiltersBtn').addEventListener('click', () => {
   FILTERABLE.forEach(key => filterState[key] = new Set());
   document.getElementById('searchInput').value = '';
   document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  // Clearing all filters also clears whichever industry/marketing-area
+  // category the student arrived through, so the masthead heading and the
+  // Back button both reflect "all alumni" rather than a stale category.
+  lastCategoryKey = null;
+  document.getElementById('subTitle').textContent = 'All available alumni';
   buildFilterPanel();
   renderGrid();
 });
