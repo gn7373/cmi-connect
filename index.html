@@ -1564,11 +1564,16 @@ function buildFilterPanel(){
 }
 
 function matchesFilters(alum){
-  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  const q = document.getElementById('searchInput').value.trim();
   if(q){
     const hay = [alum.name, alum.company, ...alum.industries, ...alum.marketingAreas, ...alum.topics]
-      .join(" ").toLowerCase();
-    if(!hay.includes(q)) return false;
+      .join(" ");
+    // Match at a word boundary rather than any substring, so a short query
+    // like "AI" doesn't match text that merely contains those letters in
+    // the middle of an unrelated word (e.g. "Cait"). Still case-insensitive.
+    const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const pattern = new RegExp('\\b' + escaped, 'i');
+    if(!pattern.test(hay)) return false;
   }
   for(const key of FILTERABLE){
     const active = filterState[key];
