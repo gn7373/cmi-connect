@@ -711,11 +711,10 @@ main{ padding: 8px 24px 40px; }
     overflow-y: auto;
   }
   .filter-toggle-btn{ display: none; }
-  /* Outer left/right margins, the sidebar-to-card gap, the vertical gap
-     between cards, and the gap above the first card (below the toolbar)
-     are all locked to the same 24px, so there's exactly one spacing unit
-     across the whole listing page. */
-  main{ padding: 24px 24px 40px; }
+  /* Outer left/right margins are 28px (filters-to-edge, card-to-edge).
+     The sidebar-to-card gap, the vertical gap between cards, and the gap
+     above the first card stay at 24px - only the outer margins changed. */
+  main{ padding: 24px 28px 40px; }
   /* Desktop only: take the button group out of normal flex flow so its
      height can never dictate the header row's height (which happens to
      the text column when the buttons are the taller side, pushing the
@@ -724,13 +723,13 @@ main{ padding: 8px 24px 40px; }
      original in-flow position between the text and the tags. */
   .alum-header{ position: relative; }
   .alum-header > div:first-child{ padding-right: 220px; }
-  /* The card sits inside main's fixed 24px margin plus the card's own 28px
-     padding (52px total inset), but the toolbar above it - where "My
+  /* The card sits inside main's fixed 28px margin plus the card's own 28px
+     padding (56px total inset), but the toolbar above it - where "My
      Wishlist" lives - keeps its own independent 6vw margin and is never
-     touched by the 24px system. To land "Add to my picks" exactly on
-     "My Wishlist" at every screen width, this tracks the same 6vw formula
-     directly rather than assuming the two containers line up. */
-  .card-action{ position: absolute; top: 0; right: calc(6vw - 52px); }
+     touched by the fixed-margin system. To land "Add to my picks" exactly
+     on "My Wishlist" at every screen width, this tracks the same 6vw
+     formula directly rather than assuming the two containers line up. */
+  .card-action{ position: absolute; top: 0; right: calc(6vw - 56px); }
   /* #grid's own top margin (needed on mobile, where there's no sidebar
      to align with) would otherwise push the first card below the
      filter sidebar's top edge, since both are top-aligned grid items
