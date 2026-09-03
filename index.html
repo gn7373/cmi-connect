@@ -655,6 +655,12 @@ main{ padding: 8px 6vw 40px; }
   grid-template-columns: 1fr;
   gap: 24px;
 }
+#grid{
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 16px;
+}
 
 @media (min-width: 860px){
   .hero-top{
@@ -686,14 +692,13 @@ main{ padding: 8px 6vw 40px; }
      gap between cards (#grid below) are all the same 18px, so the whole
      listing page reads as one consistent spacing unit. */
   main{ padding: 8px 18px 18px; }
+  /* #grid's own top margin (needed on mobile, where there's no sidebar
+     to align with) would otherwise push the first card below the
+     filter sidebar's top edge, since both are top-aligned grid items
+     sharing one row - cancel it here so they start flush together. */
+  #grid{ margin-top: 0; }
 }
 
-#grid{
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  margin-top: 16px;
-}
 .alum-row{
   background: var(--paper);
   border: 1px solid var(--line);
