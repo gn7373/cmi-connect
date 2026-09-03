@@ -469,7 +469,7 @@ header.site p{
   .category-option{ font-size: 16px; }
 }
 .toolbar{
-  padding: 22px 6vw;
+  padding: 22px 24px;
   background: var(--paper);
   border-bottom: 1px solid var(--line);
   position: sticky;
@@ -672,7 +672,7 @@ header.site p{
 }
 
 /* ---------- LISTING ---------- */
-main{ padding: 8px 6vw 40px; }
+main{ padding: 8px 24px 40px; }
 .listing-layout{
   display: grid;
   grid-template-columns: 1fr;
@@ -715,7 +715,16 @@ main{ padding: 8px 6vw 40px; }
      between cards, and the gap above the first card (below the toolbar)
      are all locked to the same 24px, so there's exactly one spacing unit
      across the whole listing page. */
-  main{ padding: 24px 6vw 40px; }
+  main{ padding: 24px 24px 40px; }
+  /* Desktop only: take the button group out of normal flex flow so its
+     height can never dictate the header row's height (which happens to
+     the text column when the buttons are the taller side, pushing the
+     tags-after-header down with a phantom gap). Mobile is untouched -
+     .alum-header stacks as a column there, so the buttons stay in their
+     original in-flow position between the text and the tags. */
+  .alum-header{ position: relative; }
+  .alum-header > div:first-child{ padding-right: 220px; }
+  .card-action{ position: absolute; top: 0; right: 0; }
   /* #grid's own top margin (needed on mobile, where there's no sidebar
      to align with) would otherwise push the first card below the
      filter sidebar's top edge, since both are top-aligned grid items
@@ -775,7 +784,7 @@ main{ padding: 8px 6vw 40px; }
 .capacity-line.full strong{ color: var(--warn); }
 
 .tag-line{ font-size: 16px; margin-top: 10px; line-height: 1.6; }
-.alum-company + .tag-line{ margin-top: 20px; }
+.alum-header + .tag-line{ margin-top: 20px; }
 .tag-line .label{
   display: inline-block;
   font-size: 13px;
@@ -1814,13 +1823,6 @@ function renderGrid(){
           <div class="alum-name">${a.name}${a.linkedin ? ` <a class="alum-linkedin" href="${a.linkedin}" target="_blank" rel="noopener"><svg class="linkedin-icon" width="14" height="14" viewBox="0 0 24 24" fill="#0A66C2" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.446-2.136 2.94v5.666H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zM7.119 20.452H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>LinkedIn profile ↗</a>` : ''}</div>
           ${a.role ? `<div class="alum-role">${a.role}</div>` : ''}
           <div class="alum-company">${a.company}</div>
-          ${a.format.length ? `<div class="tag-line"><span class="label">Meeting format</span><span class="values">${joinValues(cardFormatValues(a.format))}</span></div>` : ''}
-          ${a.alsoMeetsIn.length ? `<div class="tag-line"><span class="label">Also meets in</span><span class="values">${joinValues(a.alsoMeetsIn)}</span></div>` : ''}
-          ${a.brandAgency ? `<div class="tag-line"><span class="label">Type of experience</span><span class="values">${brandAgencyDisplayLabel(a.brandAgency)}</span></div>` : ''}
-          ${a.industries.length ? `<div class="tag-line"><span class="label">Industries worked in</span><span class="values">${joinValues(a.industries)}</span></div>` : ''}
-          ${a.marketingAreas.length ? `<div class="tag-line"><span class="label">Marketing expertise</span><span class="values">${joinValues(a.marketingAreas, marketingAreaDisplayLabel)}</span></div>` : ''}
-          ${a.topics.length ? `<div class="tag-line"><span class="label">Can advise on</span><span class="topic-tags">${a.topics.map(t => `<span class="topic-tag">${topicShortLabel(t)}</span>`).join('')}</span></div>` : ''}
-          ${a.availability.length ? `<div class="tag-line"><span class="label">Availability</span><span class="topic-tags">${sortFilterValues('availability', a.availability).map(v => `<span class="topic-tag">${v}</span>`).join('')}</span></div>` : ''}
         </div>
         <div class="card-action">
           <button class="wishlist-btn ${inWishlist ? 'saved' : ''}" data-name="${a.name.replace(/"/g,'&quot;')}" aria-label="${inWishlist ? 'Remove from wishlist' : 'Save for later'}" title="${inWishlist ? 'Remove from wishlist' : 'Save for later'}">
@@ -1831,6 +1833,13 @@ function renderGrid(){
           </button>
         </div>
       </div>
+      ${a.format.length ? `<div class="tag-line"><span class="label">Meeting format</span><span class="values">${joinValues(cardFormatValues(a.format))}</span></div>` : ''}
+      ${a.alsoMeetsIn.length ? `<div class="tag-line"><span class="label">Also meets in</span><span class="values">${joinValues(a.alsoMeetsIn)}</span></div>` : ''}
+      ${a.brandAgency ? `<div class="tag-line"><span class="label">Type of experience</span><span class="values">${brandAgencyDisplayLabel(a.brandAgency)}</span></div>` : ''}
+      ${a.industries.length ? `<div class="tag-line"><span class="label">Industries worked in</span><span class="values">${joinValues(a.industries)}</span></div>` : ''}
+      ${a.marketingAreas.length ? `<div class="tag-line"><span class="label">Marketing expertise</span><span class="values">${joinValues(a.marketingAreas, marketingAreaDisplayLabel)}</span></div>` : ''}
+      ${a.topics.length ? `<div class="tag-line"><span class="label">Can advise on</span><span class="topic-tags">${a.topics.map(t => `<span class="topic-tag">${topicShortLabel(t)}</span>`).join('')}</span></div>` : ''}
+      ${a.availability.length ? `<div class="tag-line"><span class="label">Availability</span><span class="topic-tags">${sortFilterValues('availability', a.availability).map(v => `<span class="topic-tag">${v}</span>`).join('')}</span></div>` : ''}
     `;
     grid.appendChild(row);
   });
