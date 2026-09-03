@@ -516,20 +516,23 @@ header.site p{
 .wishlist-toggle-btn{
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   background: none;
-  border: none;
+  border: 1.5px solid var(--ink);
+  border-radius: 20px;
   cursor: pointer;
   font-size: 13.5px;
+  font-weight: 500;
   font-family: inherit;
-  padding: 0;
+  padding: 8px 16px;
   color: var(--ink);
-  border-bottom: 1px solid transparent;
+  flex-shrink: 0;
 }
-.wishlist-toggle-btn.active{ color: var(--accent); border-bottom-color: var(--accent); }
+.wishlist-toggle-btn:hover{ border-color: var(--accent); color: var(--accent); }
+.wishlist-toggle-btn.active{ background: var(--accent); border-color: var(--accent); color: #fff; }
 .wishlist-toggle-btn.active svg{ fill: currentColor; }
 .wishlist-count{ color: var(--muted); }
-.wishlist-toggle-btn.active .wishlist-count{ color: var(--accent); }
+.wishlist-toggle-btn.active .wishlist-count{ color: #fff; }
 
 .result-line{
   margin-top: 14px;
@@ -761,15 +764,15 @@ main{ padding: 8px 6vw 40px; }
 .card-action{ display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
 .wishlist-btn{
   background: none;
-  border: 1px solid var(--line-strong);
+  border: 1.5px solid var(--line-strong);
   color: var(--muted);
-  padding: 9px 10px;
+  padding: 9px 11px;
   line-height: 0;
   cursor: pointer;
   flex-shrink: 0;
 }
 .wishlist-btn:hover{ border-color: var(--accent); color: var(--accent); }
-.wishlist-btn.saved{ border-color: var(--accent); color: var(--accent); }
+.wishlist-btn.saved{ background: var(--accent); border-color: var(--accent); color: #fff; }
 .add-btn{
   border: 1px solid var(--ink);
   background: none;
@@ -1723,7 +1726,10 @@ function renderGrid(){
 
   grid.innerHTML = '';
   if(filtered.length === 0){
-    grid.innerHTML = `<div class="empty-state">No alumni match those filters right now — try clearing a few.</div>`;
+    const message = (showWishlistOnly && wishlist.size === 0)
+      ? "Your wishlist is empty. Click the bookmark icon on any alum's card to save them here for later."
+      : "No alumni match those filters right now. Try clearing a few.";
+    grid.innerHTML = `<div class="empty-state">${message}</div>`;
     return;
   }
 
@@ -1743,7 +1749,7 @@ function renderGrid(){
         </div>
         <div class="card-action">
           <button class="wishlist-btn ${inWishlist ? 'saved' : ''}" data-name="${a.name.replace(/"/g,'&quot;')}" aria-label="${inWishlist ? 'Remove from wishlist' : 'Save for later'}" title="${inWishlist ? 'Remove from wishlist' : 'Save for later'}">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="${inWishlist ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="${inWishlist ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg>
           </button>
           <button class="add-btn ${inCart ? 'added' : ''}" data-id="${a.id}">
             ${inCart ? `✓ Pick #${pickIndex+1}` : 'Add to my picks'}
@@ -1896,6 +1902,7 @@ document.getElementById('wishlistToggleBtn').addEventListener('click', () => {
   showWishlistOnly = !showWishlistOnly;
   updateWishlistToggleUI();
   renderGrid();
+  document.getElementById('grid').scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 
 document.getElementById('clearFiltersBtn').addEventListener('click', () => {
