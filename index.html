@@ -682,6 +682,10 @@ main{ padding: 8px 6vw 40px; }
     overflow-y: auto;
   }
   .filter-toggle-btn{ display: none; }
+  /* Match the outer left/right margins to the sidebar-to-card gap (40px)
+     so the spacing reads as one consistent rhythm instead of the much
+     wider 6vw page margins fighting the tighter internal column gap. */
+  main{ padding: 8px 40px 40px; }
 }
 
 #grid{
@@ -1067,6 +1071,15 @@ body.has-cart-bar .toast{ bottom: 92px; }
 </form>
 
 <script>
+// The browser's own scroll-position memory otherwise restores wherever the
+// page was scrolled to before a refresh, even though the app itself always
+// resets its view back to the landing state on load - the mismatch is what
+// made a refresh appear to land "at the bottom" of the hero. The app already
+// scrolls to the top itself on every view change, so this hand-off isn't
+// needed and actively fights that.
+if('scrollRestoration' in history) history.scrollRestoration = 'manual';
+window.scrollTo(0, 0);
+
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
    Everything below this block is generic and shouldn't need touching.
