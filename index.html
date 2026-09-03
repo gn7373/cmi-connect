@@ -684,6 +684,13 @@ main{ padding: 8px 24px 40px; }
   gap: 24px;
   margin-top: 16px;
 }
+@media (max-width: 859px){
+  /* Mobile only: alumni cards get slightly tighter gaps (20px) than
+     desktop (24px/28px) - card-to-card and card-to-screen-edge only,
+     nothing else on the page. */
+  main{ padding: 8px 20px 40px; }
+  #grid{ gap: 20px; }
+}
 
 @media (min-width: 860px){
   .hero-top{
