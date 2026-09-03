@@ -666,7 +666,7 @@ main{ padding: 8px 6vw 40px; }
   }
   .listing-layout{
     grid-template-columns: 220px 1fr;
-    gap: 40px;
+    gap: 18px;
     align-items: start;
   }
   .filter-sidebar{
@@ -682,10 +682,10 @@ main{ padding: 8px 6vw 40px; }
     overflow-y: auto;
   }
   .filter-toggle-btn{ display: none; }
-  /* Match the outer left/right margins to the sidebar-to-card gap (40px)
-     so the spacing reads as one consistent rhythm instead of the much
-     wider 6vw page margins fighting the tighter internal column gap. */
-  main{ padding: 8px 40px 40px; }
+  /* Outer left/right margins, the sidebar-to-card gap, and the vertical
+     gap between cards (#grid below) are all the same 18px, so the whole
+     listing page reads as one consistent spacing unit. */
+  main{ padding: 8px 18px 18px; }
 }
 
 #grid{
