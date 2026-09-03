@@ -469,7 +469,7 @@ header.site p{
   .category-option{ font-size: 16px; }
 }
 .toolbar{
-  padding: 22px 24px;
+  padding: 22px 6vw;
   background: var(--paper);
   border-bottom: 1px solid var(--line);
   position: sticky;
@@ -724,7 +724,13 @@ main{ padding: 8px 24px 40px; }
      original in-flow position between the text and the tags. */
   .alum-header{ position: relative; }
   .alum-header > div:first-child{ padding-right: 220px; }
-  .card-action{ position: absolute; top: 0; right: 0; }
+  /* The card sits inside main's fixed 24px margin plus the card's own 28px
+     padding (52px total inset), but the toolbar above it - where "My
+     Wishlist" lives - keeps its own independent 6vw margin and is never
+     touched by the 24px system. To land "Add to my picks" exactly on
+     "My Wishlist" at every screen width, this tracks the same 6vw formula
+     directly rather than assuming the two containers line up. */
+  .card-action{ position: absolute; top: 0; right: calc(6vw - 52px); }
   /* #grid's own top margin (needed on mobile, where there's no sidebar
      to align with) would otherwise push the first card below the
      filter sidebar's top edge, since both are top-aligned grid items
@@ -819,10 +825,6 @@ main{ padding: 8px 24px 40px; }
   align-items: center;
   gap: 8px;
   justify-content: flex-end;
-  /* Bleeds the buttons back out to the card's true outer edge, canceling
-     the card's own 28px padding, so "Add to my picks" lines up exactly
-     with "My Wishlist" above it rather than sitting 28px further in. */
-  margin-right: -28px;
 }
 .wishlist-btn{
   background: none;
