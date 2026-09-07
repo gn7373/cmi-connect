@@ -954,6 +954,53 @@ main{ padding: 8px 24px 40px; }
   z-index: 30;
   display:none;
 }
+
+.resubmit-modal{
+  position: fixed;
+  inset: 0;
+  background: rgba(32, 27, 29, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 40;
+}
+.resubmit-modal-card{
+  background: var(--paper);
+  border-radius: 10px;
+  padding: 32px;
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(32, 27, 29, 0.2);
+}
+.resubmit-modal-text{
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--ink);
+  margin: 0 0 24px;
+}
+.resubmit-modal-actions{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.resubmit-modal-actions .submit-btn,
+.resubmit-modal-actions .add-btn{
+  width: 100%;
+  justify-content: center;
+}
+.resubmit-modal-cancel{
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 13.5px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  margin-top: 16px;
+  padding: 0;
+}
 .toast.show{ display:block; }
 .toast.toast-success{ background: var(--success); white-space: nowrap; }
 /* On the alumni listing page a sticky cart bar sits at the very
@@ -1117,6 +1164,17 @@ body.has-cart-bar .toast{ bottom: 92px; }
 </div>
 
 <div class="toast" id="toast"></div>
+
+<div class="resubmit-modal" id="resubmitModal" style="display:none">
+  <div class="resubmit-modal-card">
+    <p class="resubmit-modal-text">You've already submitted picks from this browser. Would you like to populate the form with your new selections, or edit your original response yourself?</p>
+    <div class="resubmit-modal-actions">
+      <button class="submit-btn" id="resubmitNewPicks">Use my new picks</button>
+      <button class="add-btn" id="resubmitEditOriginal">Edit my response myself</button>
+    </div>
+    <button class="resubmit-modal-cancel" id="resubmitCancel">Cancel</button>
+  </div>
+</div>
 
 <!-- Submits feedback straight into a Google Sheet, no email client
      needed - posts to the Form's response endpoint and targets a
@@ -1481,6 +1539,20 @@ function saveWishlist(){
 }
 let wishlist = loadWishlist();
 let showWishlistOnly = false;
+
+// Tracks (per browser, not per person - there's no login system here) whether
+// this browser has already clicked Submit once, so a second submission can
+// offer to route through Google's own "edit your response" flow instead of
+// silently creating what looks like a duplicate.
+const HAS_SUBMITTED_KEY = "cmiConnectHasSubmittedPicks";
+function hasSubmittedBefore(){
+  try{ return localStorage.getItem(HAS_SUBMITTED_KEY) === "true"; }
+  catch(e){ return false; }
+}
+function markAsSubmitted(){
+  try{ localStorage.setItem(HAS_SUBMITTED_KEY, "true"); }
+  catch(e){ /* ignore - nothing we can do if storage is blocked */ }
+}
 
 const MULTI_FIELDS = ["format", "alsoMeetsIn", "industries", "marketingAreas", "topics", "availability"];
 const SINGLE_FIELDS = ["brandAgency"];
@@ -1980,10 +2052,32 @@ function buildPrefillUrl(){
   return `${CLAIM_FORM.baseUrl}?${params.toString()}`;
 }
 
-document.getElementById('submitBtn').addEventListener('click', () => {
-  if(cart.length === 0) return;
+function goSubmitNewPicks(){
   const url = buildPrefillUrl();
   window.open(url, '_blank', 'noopener');
+  markAsSubmitted();
+  closeResubmitModal();
+}
+function goEditOriginalResponse(){
+  // No prefill - this sends them to the bare form, where Google's own
+  // "edit your response" flow takes over if they're signed into the same
+  // account they used before.
+  window.open(CLAIM_FORM.baseUrl, '_blank', 'noopener');
+  closeResubmitModal();
+}
+function openResubmitModal(){ document.getElementById('resubmitModal').style.display = ''; }
+function closeResubmitModal(){ document.getElementById('resubmitModal').style.display = 'none'; }
+
+document.getElementById('submitBtn').addEventListener('click', () => {
+  if(cart.length === 0) return;
+  if(hasSubmittedBefore()) openResubmitModal();
+  else goSubmitNewPicks();
+});
+document.getElementById('resubmitNewPicks').addEventListener('click', goSubmitNewPicks);
+document.getElementById('resubmitEditOriginal').addEventListener('click', goEditOriginalResponse);
+document.getElementById('resubmitCancel').addEventListener('click', closeResubmitModal);
+document.getElementById('resubmitModal').addEventListener('click', (e) => {
+  if(e.target.id === 'resubmitModal') closeResubmitModal();
 });
 
 document.getElementById('searchInput').addEventListener('input', renderGrid);
