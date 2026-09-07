@@ -1699,6 +1699,7 @@ function buildFilterPanel(){
       if(key === 'topics') displayVal = topicDisplayLabel(val);
       else if(key === 'brandAgency') displayVal = brandAgencyDisplayLabel(val);
       else if(key === 'marketingAreas') displayVal = marketingAreaDisplayLabel(val);
+      else if(key === 'format') displayVal = formatDisplayLabel(val);
       optionLabel.appendChild(document.createTextNode(displayVal));
       optionCheckboxes.push(checkbox);
       optionsList.appendChild(optionLabel);
@@ -1802,6 +1803,13 @@ const BRAND_AGENCY_DISPLAY_OVERRIDES = {
 
 function brandAgencyDisplayLabel(value){
   return BRAND_AGENCY_DISPLAY_OVERRIDES[value] || value;
+}
+
+const FORMAT_DISPLAY_OVERRIDES = {
+  "Both in person (Evanston/Chicago) and virtual": "Both in person and virtual"
+};
+function formatDisplayLabel(value){
+  return FORMAT_DISPLAY_OVERRIDES[value] || value;
 }
 
 function renderGrid(){
