@@ -1019,9 +1019,57 @@ main{ padding: 8px 24px 40px; }
    closer to the bottom edge instead of floating with dead space
    under it. */
 body.has-cart-bar .toast{ bottom: 92px; }
+
+.update-banner{
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 12px 20px;
+  background: var(--accent-deep);
+  color: var(--paper);
+  font-size: 14px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(32, 27, 29, 0.2);
+}
+.update-banner.show{ display: flex; }
+.update-banner-btn{
+  background: var(--accent);
+  color: var(--accent-deep);
+  border: none;
+  border-radius: 6px;
+  padding: 6px 16px;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.update-banner-dismiss{
+  background: none;
+  border: none;
+  color: var(--paper);
+  opacity: 0.7;
+  font-size: 13px;
+  font-family: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+}
 </style>
 </head>
 <body>
+
+<div class="update-banner" id="updateBanner">
+  <span>A newer version of this page is available.</span>
+  <button class="update-banner-btn" id="updateBannerRefresh">Refresh now</button>
+  <button class="update-banner-dismiss" id="updateBannerDismiss">Dismiss</button>
+</div>
 
 <header class="site">
   <div id="heroLanding">
@@ -1205,6 +1253,15 @@ body.has-cart-bar .toast{ bottom: 92px; }
 // needed and actively fights that.
 if('scrollRestoration' in history) history.scrollRestoration = 'manual';
 window.scrollTo(0, 0);
+
+// Bump this string on every deploy (any distinct value works - a
+// timestamp is simplest). checkForNewVersion() below periodically
+// re-fetches this same page with caching disabled and compares its
+// BUILD_VERSION to this one; a mismatch means a newer version has been
+// pushed since this tab loaded, so it shows a small "refresh to update"
+// banner instead of leaving someone stuck on stale cached code with no
+// way to know a change even happened.
+const BUILD_VERSION = "2026-09-08-1";
 
 /* ============================================================
    ORGANIZER CONFIG — edit this block for your own Sheet + Form.
@@ -2421,6 +2478,34 @@ document.querySelectorAll('.faq-item').forEach(item => {
 showLanding();
 
 loadData();
+
+/**
+ * Re-fetches this same page (bypassing the cache) every few minutes and
+ * compares its BUILD_VERSION to the one this tab loaded with. A mismatch
+ * means a newer version has been deployed since this tab opened, so a
+ * banner offers a refresh instead of leaving someone on stale code with
+ * no indication anything changed. Deliberately never auto-reloads on its
+ * own - someone might be mid-search or about to submit their picks.
+ */
+let updateCheckDismissed = false;
+function checkForNewVersion(){
+  if(updateCheckDismissed) return;
+  fetch(window.location.pathname + '?_=' + Date.now(), { cache: 'no-store' })
+    .then(r => r.text())
+    .then(html => {
+      const match = html.match(/const BUILD_VERSION = "([^"]+)"/);
+      if(match && match[1] !== BUILD_VERSION){
+        document.getElementById('updateBanner').classList.add('show');
+      }
+    })
+    .catch(() => {}); // offline or blocked - just try again next interval
+}
+document.getElementById('updateBannerRefresh').addEventListener('click', () => window.location.reload());
+document.getElementById('updateBannerDismiss').addEventListener('click', () => {
+  updateCheckDismissed = true;
+  document.getElementById('updateBanner').classList.remove('show');
+});
+setInterval(checkForNewVersion, 3 * 60 * 1000);
 </script>
 
 </body>
