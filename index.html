@@ -752,6 +752,15 @@ main{ padding: 8px 24px 40px; }
   border-radius: 10px;
   box-shadow: 0 1px 3px rgba(32, 27, 29, 0.05);
   padding: 28px;
+  animation: cardFadeIn 0.32s ease both;
+  animation-delay: var(--card-delay, 0ms);
+}
+@keyframes cardFadeIn{
+  from{ opacity: 0; transform: translateY(8px); }
+  to{ opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce){
+  .alum-row{ animation: none; }
 }
 .alum-header{
   display: flex;
@@ -1784,6 +1793,11 @@ function buildFilterPanel(){
 }
 
 function matchesFilters(alum){
+  // Wish List view is independent of every sidebar filter checkbox below -
+  // it's meant to always show everything saved regardless of what's
+  // checked elsewhere, so those selections are still there untouched when
+  // someone leaves the Wish List view. Search still applies even in Wish
+  // List view, so you can search within your saved alumni.
   if(showWishlistOnly && !wishlist.has(wishlistKey(alum.name))) return false;
   const q = document.getElementById('searchInput').value.trim();
   if(q){
@@ -1796,6 +1810,7 @@ function matchesFilters(alum){
     const pattern = new RegExp('\\b' + escaped, 'i');
     if(!pattern.test(hay)) return false;
   }
+  if(showWishlistOnly) return true; // skip the sidebar filter checkboxes entirely in Wish List view
   for(const key of FILTERABLE){
     const active = filterState[key];
     if(!active || active.size === 0) continue;
@@ -1891,14 +1906,19 @@ function renderGrid(){
 
   grid.innerHTML = '';
   if(filtered.length === 0){
-    const message = (showWishlistOnly && wishlist.size === 0)
-      ? "Your wishlist is empty. Click the bookmark icon on any alum's card to save them here for later."
-      : "No alumni match those filters right now. Try clearing a few.";
+    let message;
+    if(showWishlistOnly && wishlist.size === 0){
+      message = "Your wishlist is empty. Click the bookmark icon on any alum's card to save them here for later.";
+    } else if(showWishlistOnly){
+      message = "This alum is not in your wish list.";
+    } else {
+      message = "No alumni match those filters right now. Try clearing a few.";
+    }
     grid.innerHTML = `<div class="empty-state">${message}</div>`;
     return;
   }
 
-  filtered.forEach(a => {
+  filtered.forEach((a, i) => {
     const pickIndex = cart.indexOf(a.id);
     const inCart = pickIndex !== -1;
     const inWishlist = wishlist.has(wishlistKey(a.name));
@@ -1906,6 +1926,10 @@ function renderGrid(){
     const row = document.createElement('div');
     row.className = 'alum-row';
     row.dataset.name = a.name;
+    // Staggers each card's fade-in slightly so a filter change reads as an
+    // obvious cascade instead of an instant, easy-to-miss swap - capped so
+    // a long list doesn't feel sluggish to finish appearing.
+    row.style.setProperty('--card-delay', `${Math.min(i, 10) * 28}ms`);
     row.innerHTML = `
       <div class="alum-header">
         <div>
