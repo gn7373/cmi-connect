@@ -1277,6 +1277,7 @@ const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQzxeSvTj
 //    sheet (case-sensitive, must match your actual Google Form question
 //    wording exactly, since that's what becomes the column header).
 const COLUMNS = {
+  timestamp:     "Timestamp",
   name:          "Name",
   role:          "Current role. (If in between jobs, please state your most recent role and your incoming role.)",
   company:       "Current company. (If in between jobs, please share the last company at which you worked.)",
@@ -1678,6 +1679,7 @@ function normalizeRow(row, index){
   const rawIndustries = smartSplit(row[COLUMNS.industries], KNOWN_OPTIONS.industries);
   return {
     id: index,
+    timestamp: (row[COLUMNS.timestamp] || "").trim(),
     name: (row[COLUMNS.name] || "").trim(),
     role: (row[COLUMNS.role] || "").trim(),
     company: (row[COLUMNS.company] || "").trim(),
@@ -2201,10 +2203,45 @@ function setStatus(html, type){
   document.getElementById('statusArea').innerHTML = html ? `<div class="status-banner ${type}">${html}</div>` : '';
 }
 
+// PHASE I / PHASE II CUTOFF
+// Only alumni who submitted on or before Bri Sandack (the last Phase I
+// sign-up) are shown on the site. Anyone with a later Timestamp is held
+// back for the Phase II site, even though they already appear on the
+// public data tab. This is pinned to Bri's exact submission time rather
+// than looked up by her name, so the cutoff can't drift if a response is
+// edited (Google updates the Timestamp on edit) or a name is retyped.
+// Compared by Timestamp, NOT row position, since the public tab's formula
+// can reorder rows. Set to "" to remove the cutoff once Phase II launches.
+const PHASE_CUTOFF_TIMESTAMP = "9/2/2026 13:11:51"; // Bri Sandack
+
+/**
+ * Turns a Google Sheets timestamp ("M/D/YYYY H:MM:SS") into a sortable
+ * number. Parsed by hand instead of new Date() because browsers disagree
+ * on parsing this non-standard format, and a silent NaN would let rows
+ * slip past the cutoff. Returns NaN if the text doesn't match.
+ */
+function parseSheetTimestamp(text){
+  const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})(?::(\d{2}))?$/.exec((text || "").trim());
+  if(!m) return NaN;
+  const [, mo, d, y, h, mi, sec] = m.map(Number);
+  return Date.UTC(y, mo - 1, d, h, mi, sec || 0);
+}
+
+/**
+ * Drops everyone whose Timestamp is later than PHASE_CUTOFF_TIMESTAMP.
+ * Rows with a missing or unreadable Timestamp are also dropped - hiding
+ * one alum by mistake is safer than showing a Phase II sign-up early.
+ */
+function applyPhaseCutoff(list){
+  if(!PHASE_CUTOFF_TIMESTAMP) return list;
+  const cutoffTime = parseSheetTimestamp(PHASE_CUTOFF_TIMESTAMP);
+  return list.filter(a => parseSheetTimestamp(a.timestamp) <= cutoffTime);
+}
+
 function loadData(){
   if(SHEET_CSV_URL.includes("PASTE_YOUR")){
     // No real Sheet connected yet — preview with sample data instead.
-    alumni = SAMPLE_ROWS.map(normalizeRow).filter(a => a.name);
+    alumni = applyPhaseCutoff(SAMPLE_ROWS.map(normalizeRow).filter(a => a.name));
     FILTERABLE.forEach(key => filterState[key] = new Set());
     document.getElementById('roundNote').textContent = ROUND_LABEL + " (preview mode)";
     buildFilterPanel();
@@ -2225,9 +2262,11 @@ function loadData(){
     // matches even if the live Form's exact spacing drifts from this file's.
     transformHeader: h => h.trim().replace(/\s+/g, ' '),
     complete: (results) => {
-      alumni = results.data
-        .map(normalizeRow)
-        .filter(a => a.name); // drop any blank rows
+      alumni = applyPhaseCutoff(
+        results.data
+          .map(normalizeRow)
+          .filter(a => a.name) // drop any blank rows
+      );
 
       FILTERABLE.forEach(key => filterState[key] = new Set());
 
