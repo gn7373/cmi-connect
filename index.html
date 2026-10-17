@@ -42,6 +42,46 @@ body{
 body.has-cart-bar{
   padding-bottom: 96px;
 }
+body.archive-notice-open{ overflow: hidden; }
+/* Archive notice (2026-10-17) - a full-screen interstitial shown first,
+   on top of everything else, telling visitors this pilot site is
+   archived and pointing them at the rebranded IMC Connects site. Covers
+   the page via position:fixed rather than restructuring the existing
+   markup underneath, so it can't interfere with anything already here -
+   "Proceed to Archived Pilot" just hides it, revealing the page exactly
+   as it already was. */
+.archive-notice{
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: var(--paper);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  text-align: center;
+}
+.archive-notice-card{ max-width: 560px; }
+.archive-notice-card p{
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--ink);
+  margin: 0 0 22px;
+}
+.archive-notice-card a{ color: var(--accent); font-weight: 600; }
+.archive-notice-proceed{
+  margin-top: 6px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 14px 34px;
+  font-family: 'Fraunces', serif;
+  font-size: 18px;
+  cursor: pointer;
+}
+.archive-notice-proceed:hover{ background: var(--accent-deep); }
 :focus-visible{ outline: 2px solid var(--accent); outline-offset: 2px; }
 #submitBtn:focus-visible{ outline-color: var(--success); }
 .add-btn:focus-visible{ outline-color: var(--success-on-light); }
@@ -1063,7 +1103,16 @@ body.has-cart-bar .toast{ bottom: 92px; }
 }
 </style>
 </head>
-<body>
+<body class="archive-notice-open">
+
+<div class="archive-notice" id="archiveNotice">
+  <div class="archive-notice-card">
+    <p>Hello! Thank you for your interest in meeting some alums. This is a pilot site that was archived when the pilot ended on Sep. 7.</p>
+    <p>CMI Connect has now rebranded to IMC Connects, and you can access the updated site here: <a href="https://gn7373.github.io/IMC-Connects/" target="_blank" rel="noopener">gn7373.github.io/IMC-Connects</a></p>
+    <p>If you'd like to view this archived site, click below to proceed.</p>
+    <button type="button" class="archive-notice-proceed" id="archiveNoticeProceed">Proceed to Archived Pilot</button>
+  </div>
+</div>
 
 <div class="update-banner" id="updateBanner">
   <span>A newer version of this page is available.</span>
@@ -2500,6 +2549,10 @@ function checkForNewVersion(){
     })
     .catch(() => {}); // offline or blocked - just try again next interval
 }
+document.getElementById('archiveNoticeProceed').addEventListener('click', () => {
+  document.getElementById('archiveNotice').style.display = 'none';
+  document.body.classList.remove('archive-notice-open');
+});
 document.getElementById('updateBannerRefresh').addEventListener('click', () => window.location.reload());
 document.getElementById('updateBannerDismiss').addEventListener('click', () => {
   updateCheckDismissed = true;
