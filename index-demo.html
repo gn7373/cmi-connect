@@ -320,6 +320,31 @@ header.site{
   cursor: pointer;
 }
 .review-card-remove:hover{ border-color: var(--warn); color: var(--warn); }
+/* "My list" has no size cap any more (2026-10-17) - the 5-max now only
+   applies to shortlisting within this drawer, via a checkbox per card
+   (top-left, mirroring the remove button at top-right) rather than at
+   add-time. */
+.shortlist-status{
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.shortlist-toggle{
+  position: absolute;
+  top: 16px;
+  left: 18px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+}
+.shortlist-toggle input{ width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; }
+.review-card.shortlisted{ border-color: var(--accent); box-shadow: 0 6px 16px rgba(37,37,100,0.08), 0 0 0 1.5px var(--accent) inset; }
 .review-empty{
   color: var(--muted);
   font-style: italic;
@@ -648,17 +673,22 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    tab). */
 .directory-toolbar{
   display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 6vw;
+  border-bottom: 1px solid var(--line);
+}
+.directory-toolbar .search-box{ width: 100%; max-width: none; }
+.toolbar-row2{
+  display: flex;
   align-items: center;
   gap: 16px;
   flex-wrap: wrap;
-  padding: 18px 28px;
-  border-bottom: 1px solid var(--line);
 }
-.directory-toolbar .search-box{ flex: 1 1 240px; max-width: 360px; }
-.directory-toolbar .filter-bar{ flex: 2 1 auto; margin-top: 0; }
+.toolbar-row2 .filter-bar{ flex: 1 1 auto; margin-top: 0; }
 .directory-list-header{
   flex: 0 0 auto;
-  padding: 16px 28px 8px;
+  padding: 16px 6vw 8px;
   font-family: 'Inter', sans-serif;
   font-size: 12.5px;
   color: var(--muted);
@@ -682,12 +712,15 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   min-height: 0;
   overflow-y: auto;
 }
-/* Draggable divider - see initDirectoryResizer(). A 10px hit target
-   (easier to grab than the hairline it draws) with a small pill handle,
-   both highlighting on hover/drag. */
+/* Draggable divider - see initDirectoryResizer(). A 16px hit target
+   (bigger than before, per request, for easier grabbing/visibility) that
+   draws a hairline down its middle, highlighting on hover/drag. The
+   collapse control (2026-10-17) lives directly on it now, as a small
+   chevron button at its vertical midpoint - double-clicking/double-
+   tapping it resets the split back to the default widths. */
 .directory-resizer{
-  flex: 0 0 10px;
-  width: 10px;
+  flex: 0 0 16px;
+  width: 16px;
   cursor: col-resize;
   position: relative;
   display: flex;
@@ -709,20 +742,27 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 }
 .directory-resizer:hover::before,
 .directory-resizer.dragging::before{ background: var(--accent); }
-.directory-resizer-handle{
-  width: 4px;
-  height: 32px;
-  border-radius: 3px;
-  background: var(--line-strong);
-  pointer-events: none;
+.directory-resizer-collapse{
+  width: 24px;
+  height: 44px;
+  border-radius: 10px;
+  border: 1.5px solid var(--line-strong);
+  background: #fff;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
 }
-.directory-resizer:hover .directory-resizer-handle,
-.directory-resizer.dragging .directory-resizer-handle{ background: var(--accent); }
+.directory-resizer:hover .directory-resizer-collapse,
+.directory-resizer.dragging .directory-resizer-collapse{ border-color: var(--accent); color: var(--accent); }
 .directory-right{
   flex: 1 1 auto;
   min-width: 320px;
   overflow-y: auto;
-  padding: 28px 40px 60px;
+  padding: 28px 6vw 60px;
 }
 /* Collapsing the profile panel (2026-10-17): hides it and the resizer,
    the directory expands to fill the width, and a floating "›" docks at
@@ -755,7 +795,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-  padding: 16px 28px;
+  padding: 16px 6vw;
   cursor: pointer;
   border: none;
   border-bottom: 1px solid var(--line);
@@ -825,27 +865,6 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 }
 .profile-back-btn:hover{ color: var(--ink); }
 .profile-availability{ display: flex; align-items: center; gap: 12px; }
-/* Collapse control (2026-10-17) - hides the profile panel so the
-   directory can take the full width; .directory-reopen-btn (floating
-   "›" on the right edge) brings it back. Desktop-only, same as the
-   resizer - mobile already has its own full-screen pattern. */
-.profile-collapse-btn{
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  border: 1.5px solid var(--line-strong);
-  background: none;
-  color: var(--muted);
-  cursor: pointer;
-  flex-shrink: 0;
-}
-.profile-collapse-btn:hover{ border-color: var(--accent); color: var(--accent); }
-@media (max-width: 1023px){
-  .profile-collapse-btn{ display: none; }
-}
 .profile-header{ display: flex; gap: 28px; align-items: flex-start; }
 /* Portrait + text stack vertically once the panel gets narrow (resized
    small, or on a mobile detail view) - toggled by a ResizeObserver on
@@ -873,8 +892,8 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   line-height: 1.15;
   color: var(--ink);
 }
-.profile-info .alum-role{ margin-top: 8px; font-size: 15px; }
-.profile-info .alum-company{ font-size: 18px; margin-top: 4px; }
+.profile-info .alum-role{ margin-top: 8px; font-size: 18px; }
+.profile-info .alum-company{ font-size: 15px; margin-top: 4px; }
 .profile-info .alum-meta{ margin-top: 16px; font-size: 14px; }
 .profile-divider{
   margin: 28px 0;
@@ -909,11 +928,11 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   border:none;
   cursor:pointer;
   font-size: 13.5px;
+  font-weight: 700;
   font-family: inherit;
   padding: 0;
   color: var(--accent);
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  text-decoration: none;
 }
 /* A vertical tab docked to the right edge of the viewport, centered on
    it - not part of the toolbar/search row any more (2026-10-15, per
@@ -1309,7 +1328,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 }
 .alum-role{
   font-family: 'Inter', sans-serif;
-  font-size: 13.5px;
+  font-size: 17px;
   font-weight: 400;
   color: var(--ink);
   margin-top: 4px;
@@ -1329,7 +1348,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 .linkedin-icon{ flex-shrink: 0; }
 .alum-company{
   font-family: 'Inter', sans-serif;
-  font-size: 17px;
+  font-size: 13.5px;
   font-weight: 600;
   color: var(--accent);
   margin-top: 2px;
@@ -1364,12 +1383,12 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 .field-label{
   display: block;
   font-family: 'Inter', sans-serif;
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.01em;
+  text-transform: none;
   color: var(--accent-deep);
   margin-bottom: 6px;
-  font-weight: 500;
+  font-weight: 700;
 }
 .ask-me-about .field-label{ margin-bottom: 8px; }
 /* Industry Expertise + Marketing Expertise side by side as two columns
@@ -1705,14 +1724,25 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   gap: 10px;
 }
 .submit-btn:disabled{ background: var(--line-strong); color: var(--muted); cursor:not-allowed; }
-.pin-cap-notice{
-  background: var(--accent-tint);
-  color: var(--ink);
-  border-radius: 10px;
-  padding: 12px 16px;
+/* Sort dropdown (2026-10-17) - reuses .filter-dropdown-panel's base
+   positioning/box styling, just a vertical list of plain option buttons
+   instead of checkboxes. */
+.sort-option{
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  padding: 9px 10px;
+  font-family: 'Inter', sans-serif;
   font-size: 13.5px;
-  margin-top: 16px;
+  color: var(--ink);
+  cursor: pointer;
+  white-space: nowrap;
 }
+.sort-option:hover{ background: var(--paper); }
+.sort-option.active{ color: var(--accent); font-weight: 600; }
 
 .toast{
   position: fixed;
@@ -1931,21 +1961,31 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
      separate rotated edge tab. -->
 <div class="directory-toolbar">
   <div class="search-box">
-    <input type="text" id="searchInput" placeholder="Search by name, company, or keyword…">
     <button class="search-btn" id="searchBtn" aria-label="Search">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
     </button>
+    <input type="text" id="searchInput" placeholder="Search by name, company, or keyword…">
   </div>
-  <div class="filter-bar">
-    <div class="filter-dropdowns" id="filterPanel"></div>
-    <button class="clear-btn" id="clearFiltersBtn">Clear all</button>
+  <div class="toolbar-row2">
+    <div class="filter-bar">
+      <div class="filter-dropdowns" id="filterPanel"></div>
+      <div class="filter-dropdown sort-dropdown" id="sortDropdown">
+        <button type="button" class="filter-dropdown-toggle" id="sortToggle" aria-haspopup="true" aria-expanded="false">
+          Sort<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="filter-dropdown-panel sort-panel" id="sortPanel">
+          <button type="button" class="sort-option" data-sort="recent">Recently added</button>
+          <button type="button" class="sort-option" data-sort="capacity">Spots available</button>
+        </div>
+      </div>
+      <button class="clear-btn" id="clearFiltersBtn">Clear all</button>
+    </div>
+    <button class="pins-toggle-btn" id="pinsToggleBtn">
+      Review &amp; Submit<span class="pins-count" id="pinsCount"></span>
+    </button>
   </div>
-  <button class="pins-toggle-btn" id="pinsToggleBtn">
-    Review &amp; Submit<span class="pins-count" id="pinsCount"></span>
-  </button>
 </div>
 <div id="statusArea"></div>
-<div class="pin-cap-notice" id="pinCapNotice" style="display:none">You've selected 5 of 5 alumni. Remove a pin to choose someone else.</div>
 
 <!-- Split-view directory: left panel is the scrollable alumni list;
      right panel is the selected alumnus's full profile, resizable via
@@ -1964,7 +2004,9 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     <div class="directory-list" id="directoryList"></div>
   </div>
   <div class="directory-resizer" id="directoryResizer" role="separator" aria-orientation="vertical" aria-label="Resize directory and profile panels" tabindex="0">
-    <span class="directory-resizer-handle" aria-hidden="true"></span>
+    <button type="button" class="directory-resizer-collapse" id="directoryCollapseBtn" aria-label="Collapse profile panel">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 6 9 12 15 18"/></svg>
+    </button>
   </div>
   <div class="directory-right" id="directoryRight"></div>
   <button class="directory-reopen-btn" id="directoryReopenBtn" aria-label="Show profile panel" style="display:none">
@@ -1977,14 +2019,15 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 <div class="pins-drawer-backdrop" id="pinsDrawerBackdrop"></div>
 <aside class="pins-drawer" id="pinsDrawer" role="dialog" aria-modal="true" aria-labelledby="pinsDrawerTitle" aria-hidden="true">
   <div class="pins-drawer-header">
-    <h2 id="pinsDrawerTitle">Please rank your top 5 <span class="pins-drawer-count" id="pinsDrawerCount">(0/5)</span></h2>
+    <h2 id="pinsDrawerTitle">My list <span class="pins-drawer-count" id="pinsDrawerCount"></span></h2>
     <button class="pins-drawer-close" id="pinsDrawerClose" aria-label="Close">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="4" y2="20"/></svg>
     </button>
   </div>
 
   <div class="pins-drawer-body" id="pinsDrawerListPane">
-    <div class="review-empty" id="pinsDrawerEmpty" style="display:none">No alumni pinned yet. Browse the directory to find people you'd like to meet.</div>
+    <div class="review-empty" id="pinsDrawerEmpty" style="display:none">No alumni added yet. Browse the directory to find people you'd like to meet.</div>
+    <div class="shortlist-status" id="shortlistStatus"></div>
     <div id="pinsDrawerList" class="review-list"></div>
   </div>
   <div class="pins-drawer-footer" id="pinsDrawerListFooter">
@@ -1997,7 +2040,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     <div id="reviewList" class="review-list"></div>
   </div>
   <div class="pins-drawer-footer" id="pinsDrawerReviewFooter" style="display:none">
-    <button class="review-back-btn" id="pinsDrawerEditBtn">← Edit my pins</button>
+    <button class="review-back-btn" id="pinsDrawerEditBtn">← Edit my list</button>
     <button class="submit-btn" id="reviewSubmitBtn">Continue to form →</button>
   </div>
 </aside>
@@ -2224,6 +2267,9 @@ const CLAIM_FORM = {
   }
 };
 
+// Caps the SHORTLIST only (2026-10-17) - "my list" (cart, below) itself
+// is unlimited now; this only gates how many of those can be marked for
+// the final Review & Submit step.
 const MAX_PICKS = 5;
 
 // ------------------------------------------------------------
@@ -2361,7 +2407,8 @@ const SAMPLE_ROWS = [
 
 let alumni = [];       // normalized alumni records
 let filterState = {};  // { categoryKey: Set of active filter values }
-let cart = [];         // unordered array of pinned alum ids (name held over from before pinning replaced the ranked-picks cart)
+let cart = [];         // unordered array of ids added to "my list" - unlimited size (2026-10-17)
+let shortlist = [];    // subset of cart's ids marked for the final Review & Submit step - capped at MAX_PICKS
 let pinsDrawerOpen = false;
 let pinsDrawerMode = 'list';         // 'list' | 'review' - two states of the same drawer, not separate pages
 let pinsDrawerReturnFocusEl = null;  // element to restore focus to when the drawer closes
@@ -3084,9 +3131,9 @@ function cardIndustryExpertiseColumnsHtml(a){
   const [primaryIndustry, ...otherIndustries] = primaryIndustryOrderedList(a);
   let industryColHtml = '';
   if(primaryIndustry){
-    let industryValueHtml = `<span>${primaryIndustry}</span>`;
+    let industryValueHtml = `<div class="topic-tags"><span class="topic-tag">${primaryIndustry}</span>`;
     if(otherIndustries.length){
-      industryValueHtml += ` <span class="industry-more-wrap">
+      industryValueHtml += `<span class="industry-more-wrap">
         <button type="button" class="industry-more-btn" aria-expanded="false">+${otherIndustries.length} more</button>
         <div class="industry-more-popover">
           <div class="industry-more-popover-title">This alum has also worked in:</div>
@@ -3094,6 +3141,7 @@ function cardIndustryExpertiseColumnsHtml(a){
         </div>
       </span>`;
     }
+    industryValueHtml += `</div>`;
     industryColHtml = `<div class="alum-col"><span class="field-label">Industry Expertise</span><div class="alum-col-value">${industryValueHtml}</div></div>`;
   }
 
@@ -3261,13 +3309,23 @@ let selectedAlumId = null;
 
 const PORTRAIT_PLACEHOLDER_SVG = '<svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/></svg>';
 
-function updatePinCapNotice(){
-  document.getElementById('pinCapNotice').style.display = cart.length >= MAX_PICKS ? '' : 'none';
+// Sort (2026-10-17) - re-orders whatever matchesFilters already narrowed
+// the list down to, so it's always "relevant to whatever filters have
+// been applied" rather than a separate, independent sort over everyone.
+let sortMode = null; // null | 'recent' | 'capacity'
+const SORT_LABELS = {recent: 'Recently added', capacity: 'Spots available'};
+function applySort(list){
+  if(sortMode === 'recent'){
+    return [...list].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  }
+  if(sortMode === 'capacity'){
+    return [...list].sort((a, b) => (b.capacity || 0) - (a.capacity || 0));
+  }
+  return list;
 }
 
 function renderGrid(){
-  const filtered = alumni.filter(matchesFilters);
-  updatePinCapNotice();
+  const filtered = applySort(alumni.filter(matchesFilters));
   renderDirectoryList(filtered);
 
   if(filtered.length === 0){
@@ -3317,6 +3375,25 @@ function renderDirectoryList(filtered){
     list.appendChild(btn);
   });
 }
+
+// Up/Down arrow-key navigation across the list rows (2026-10-17) - moves
+// focus to the next/previous row and selects it, same as arrowing
+// through a native listbox. Delegated once on the list container (whose
+// own node survives every render, even though its rows are rebuilt each
+// time) rather than bound per-row.
+document.getElementById('directoryList').addEventListener('keydown', (e) => {
+  if(e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+  const entries = [...document.querySelectorAll('.directory-entry')];
+  const currentIndex = entries.indexOf(document.activeElement);
+  if(currentIndex === -1) return;
+  e.preventDefault();
+  const nextIndex = e.key === 'ArrowDown'
+    ? Math.min(currentIndex + 1, entries.length - 1)
+    : Math.max(currentIndex - 1, 0);
+  const nextEntry = entries[nextIndex];
+  nextEntry.focus();
+  selectAlum(Number(nextEntry.dataset.id), {});
+});
 
 // Selecting an entry never rebuilds the list (so its scroll position is
 // untouched) - just swaps the .selected class and re-renders the
@@ -3372,9 +3449,7 @@ function renderProfilePanel(){
     return;
   }
 
-  const atCap = cart.length >= MAX_PICKS;
   const inCart = cart.includes(a.id);
-  const disablePin = atCap && !inCart;
   const contactHtml = cardContactLineHtml(a);
   const linkedinHtml = a.linkedin ? `<a class="alum-linkedin" href="${a.linkedin}" target="_blank" rel="noopener">${LINKEDIN_ICON_SVG}LinkedIn</a>` : '';
   const visibleTopics = a.topics.filter(t => !TOPIC_CARD_EXCLUDE.includes(t));
@@ -3383,12 +3458,8 @@ function renderProfilePanel(){
     <div class="profile-toolbar">
       <button type="button" class="profile-back-btn" id="profileBackBtn">← Back to directory</button>
       <div class="profile-availability">
-        ${capacityBadgeHtml(a.capacity, a.capacityAssumed)}
-        <button class="add-btn plus-btn profile-add-btn ${inCart ? 'added' : ''}" data-id="${a.id}" ${disablePin ? 'disabled' : ''} aria-pressed="${inCart}" aria-label="${inCart ? `Remove ${a.name}` : `Add ${a.name}`}">
-          ${inCart ? CHECK_ICON_SVG : PLUS_ICON_SVG}
-        </button>
-        <button type="button" class="profile-collapse-btn" id="profileCollapseBtn" aria-label="Collapse profile panel">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+        <button class="add-btn profile-add-btn ${inCart ? 'added' : ''}" data-id="${a.id}" aria-pressed="${inCart}" aria-label="${inCart ? `Remove ${a.name} from my list` : `Add ${a.name} to my list`}">
+          ${inCart ? CHECK_ICON_SVG : PLUS_ICON_SVG}<span>${inCart ? 'Added to my list' : 'Add to my list'}</span>
         </button>
       </div>
     </div>
@@ -3404,7 +3475,7 @@ function renderProfilePanel(){
     <div class="profile-divider"></div>
     <div class="profile-sections">
       ${cardIndustryExpertiseColumnsHtml(a)}
-      ${visibleTopics.length ? `<div class="ask-me-about"><span class="field-label">Ask me about</span><div class="topic-tags">${visibleTopics.map(t => `<span class="topic-tag">${topicShortLabel(t)}</span>`).join('')}</div></div>` : ''}
+      ${visibleTopics.length ? `<div class="ask-me-about"><span class="field-label">Ask Me About</span><div class="topic-tags">${visibleTopics.map(t => `<span class="topic-tag">${topicShortLabel(t)}</span>`).join('')}</div></div>` : ''}
     </div>
   `;
 
@@ -3430,11 +3501,19 @@ function renderProfilePanel(){
 // rebinding - or leaking - a listener every time).
 document.getElementById('directoryRight').addEventListener('click', (e) => {
   if(e.target.closest('#profileBackBtn')){ closeMobileDetail(); return; }
-  if(e.target.closest('#profileCollapseBtn')){ collapseProfilePanel(); return; }
   const addBtn = e.target.closest('.profile-add-btn');
   if(addBtn) toggleCart(parseInt(addBtn.dataset.id, 10));
 });
 document.getElementById('directoryReopenBtn').addEventListener('click', expandProfilePanel);
+// The divider's own chevron is the collapse control (2026-10-17, was a
+// separate X button on the profile panel) - stopPropagation on
+// pointerdown keeps a click here from also being read as a drag-start by
+// the resizer's own pointerdown listener below.
+document.getElementById('directoryCollapseBtn').addEventListener('pointerdown', (e) => e.stopPropagation());
+document.getElementById('directoryCollapseBtn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  collapseProfilePanel();
+});
 
 // When a pill row (Ask me about, or Marketing Expertise) wraps past its
 // first line, hides whatever wrapped and replaces it with a single
@@ -3587,7 +3666,7 @@ function initDirectoryResizer(){
   function setLeftWidth(px){
     const minWidth = parseFloat(getComputedStyle(left).minWidth) || 280;
     const splitWidth = split.getBoundingClientRect().width;
-    const maxWidth = splitWidth - rightMinWidth - 10; // 10 = the resizer's own width
+    const maxWidth = splitWidth - rightMinWidth - 16; // 16 = the resizer's own width
     left.style.flexBasis = Math.max(minWidth, Math.min(px, maxWidth)) + 'px';
   }
 
@@ -3609,6 +3688,13 @@ function initDirectoryResizer(){
   }
   resizer.addEventListener('pointerup', stopDrag);
   resizer.addEventListener('pointercancel', stopDrag);
+
+  // Double-click/double-tap the divider resets the split back to its
+  // default widths (clearing the inline flex-basis falls back to
+  // .directory-left's CSS default of 35%), per request.
+  resizer.addEventListener('dblclick', () => {
+    left.style.flexBasis = '';
+  });
 
   // Arrow-key nudging, matching the resizer's role="separator" semantics.
   resizer.addEventListener('keydown', (e) => {
@@ -3658,40 +3744,67 @@ function showToast(msg, type, alignEl){
   setTimeout(() => toast.classList.remove('show'), duration);
 }
 
+// "My list" (cart) is unlimited (2026-10-17) - the old 5-max lived here,
+// at add-time; it now only applies to the shortlist, below.
 function toggleCart(id){
   const idx = cart.indexOf(id);
   if(idx !== -1){
     cart.splice(idx, 1);
+    const sIdx = shortlist.indexOf(id);
+    if(sIdx !== -1) shortlist.splice(sIdx, 1);
   } else {
-    if(cart.length >= MAX_PICKS){
-      showToast(`You can pin up to ${MAX_PICKS} alumni. Remove one first to pin another.`);
-      return;
-    }
     cart.push(id);
   }
   // The add/pin button only ever lives on the profile panel now (the
   // directory list doesn't show one), so toggling it only ever affects
   // the currently-selected alum - no need to rebuild the whole list
   // (which would also reset its scroll position) just to pin someone.
-  updatePinCapNotice();
   renderProfilePanel();
   renderPinsDrawer();
 }
 
-// Renders the pinned-alumni cards (with a Remove control on each) into
-// either the drawer's editable list or its review pane - the two states
-// show the same records, so they share this one renderer.
-function renderPinCardsInto(containerId){
+// Shortlisting (2026-10-17) - a separate, capped-at-5 subset of "my
+// list" that the student narrows down to within the Review & Submit
+// drawer; only the shortlist (not the full list) is ever sent to the
+// form.
+function toggleShortlist(id){
+  const idx = shortlist.indexOf(id);
+  if(idx !== -1){
+    shortlist.splice(idx, 1);
+  } else {
+    if(shortlist.length >= MAX_PICKS){
+      showToast(`You can shortlist up to ${MAX_PICKS} alumni to submit. Remove one first to add another.`);
+      return;
+    }
+    shortlist.push(id);
+  }
+  renderPinsDrawer();
+}
+
+// Renders alumni cards (with a Remove control, and - only in the
+// editable "my list" pane - a Shortlist checkbox) into either the
+// drawer's editable list or its read-only review pane. The two states
+// render different id lists (the full cart vs. just the shortlist), so
+// they share this one renderer parameterized by which.
+function renderPinCardsInto(containerId, ids, opts){
+  opts = opts || {};
   const list = document.getElementById(containerId);
-  list.innerHTML = cart.map(id => {
+  list.innerHTML = ids.map(id => {
     const a = alumni.find(alum => alum.id === id);
     if(!a) return '';
     const contactHtml = cardContactLineHtml(a);
     const linkedinHtml = a.linkedin ? `<a class="alum-linkedin" href="${a.linkedin}" target="_blank" rel="noopener">${LINKEDIN_ICON_SVG}LinkedIn</a>` : '';
     const hasContact = contactHtml || linkedinHtml;
+    const isShortlisted = shortlist.includes(id);
     return `
-      <div class="review-card">
-        <button class="review-card-remove" data-id="${id}" aria-label="Remove ${a.name} from pins">×</button>
+      <div class="review-card ${isShortlisted ? 'shortlisted' : ''}">
+        ${opts.showShortlistToggle ? `
+          <label class="shortlist-toggle">
+            <input type="checkbox" class="shortlist-checkbox" data-id="${id}" ${isShortlisted ? 'checked' : ''}>
+            Shortlist
+          </label>
+        ` : ''}
+        ${opts.showRemove ? `<button class="review-card-remove" data-id="${id}" aria-label="Remove ${a.name} from my list">×</button>` : ''}
         <div class="review-card-header">
           <div class="review-card-name">${a.name}</div>
           ${capacityBadgeHtml(a.capacity, a.capacityAssumed)}
@@ -3708,30 +3821,40 @@ function renderPinCardsInto(containerId){
       toggleCart(parseInt(btn.dataset.id, 10));
     });
   });
+  list.querySelectorAll('.shortlist-checkbox').forEach(cb => {
+    cb.addEventListener('change', () => {
+      toggleShortlist(parseInt(cb.dataset.id, 10));
+    });
+  });
 }
 
 // Refreshes whichever parts of the drawer are currently relevant - safe
-// to call any time the cart changes, whether or not the drawer is open.
+// to call any time the cart/shortlist changes, whether or not the
+// drawer is open.
 function renderPinsDrawer(){
-  document.getElementById('pinsDrawerCount').textContent = `(${cart.length}/${MAX_PICKS})`;
+  const isReview = pinsDrawerMode === 'review';
+  document.getElementById('pinsDrawerCount').textContent = isReview ? `(${shortlist.length}/${MAX_PICKS})` : `(${cart.length})`;
   document.getElementById('pinsCount').textContent = cart.length ? ` (${cart.length})` : '';
 
   const empty = cart.length === 0;
   document.getElementById('pinsDrawerEmpty').style.display = empty ? '' : 'none';
   document.getElementById('pinsDrawerContinueExploring').style.display = empty ? '' : 'none';
-  document.getElementById('pinsDrawerContinueBtn').disabled = empty;
-  renderPinCardsInto('pinsDrawerList');
+  document.getElementById('pinsDrawerContinueBtn').disabled = shortlist.length === 0;
+  renderPinCardsInto('pinsDrawerList', cart, {showShortlistToggle: true, showRemove: true});
 
-  if(pinsDrawerMode === 'review'){
-    renderPinCardsInto('reviewList');
-    document.getElementById('reviewSubmitBtn').disabled = cart.length === 0;
+  const statusEl = document.getElementById('shortlistStatus');
+  if(statusEl) statusEl.textContent = cart.length ? `${shortlist.length} of ${MAX_PICKS} shortlisted for Review & Submit` : '';
+
+  if(isReview){
+    renderPinCardsInto('reviewList', shortlist, {showShortlistToggle: false, showRemove: false});
+    document.getElementById('reviewSubmitBtn').disabled = shortlist.length === 0;
   }
 }
 
-// The drawer has two internal states - the editable pins list, and the
-// final review before handing off to the form - rather than the review
-// being a separate page. Switching between them never closes the drawer
-// or touches the directory underneath it.
+// The drawer has two internal states - the editable "my list", and the
+// final review of just the shortlist before handing off to the form -
+// rather than the review being a separate page. Switching between them
+// never closes the drawer or touches the directory underneath it.
 function setPinsDrawerMode(mode){
   pinsDrawerMode = mode;
   const isReview = mode === 'review';
@@ -3739,7 +3862,7 @@ function setPinsDrawerMode(mode){
   document.getElementById('pinsDrawerListFooter').style.display = isReview ? 'none' : '';
   document.getElementById('pinsDrawerReviewPane').style.display = isReview ? '' : 'none';
   document.getElementById('pinsDrawerReviewFooter').style.display = isReview ? '' : 'none';
-  document.getElementById('pinsDrawerTitle').firstChild.textContent = 'Please rank your top 5 ';
+  document.getElementById('pinsDrawerTitle').firstChild.textContent = isReview ? 'Your shortlist ' : 'My list ';
   renderPinsDrawer();
 }
 
@@ -3797,7 +3920,7 @@ function buildPrefillUrl(){
   const params = new URLSearchParams();
   params.set('usp', 'pp_url');
   const entryKeys = ['pick1', 'pick2', 'pick3', 'pick4', 'pick5'];
-  cart.forEach((id, i) => {
+  shortlist.forEach((id, i) => {
     const alum = alumni.find(a => a.id === id);
     const entryId = CLAIM_FORM.entryIds[entryKeys[i]];
     if(entryId) params.set(entryId, alumReferenceLabel(alum));
@@ -3823,7 +3946,7 @@ function openResubmitModal(){ document.getElementById('resubmitModal').style.dis
 function closeResubmitModal(){ document.getElementById('resubmitModal').style.display = 'none'; }
 
 document.getElementById('pinsDrawerContinueBtn').addEventListener('click', () => {
-  if(cart.length === 0) return;
+  if(shortlist.length === 0) return;
   setPinsDrawerMode('review');
   document.getElementById('pinsDrawerClose').focus();
 });
@@ -3832,7 +3955,7 @@ document.getElementById('pinsDrawerEditBtn').addEventListener('click', () => {
   document.getElementById('pinsDrawerClose').focus();
 });
 document.getElementById('reviewSubmitBtn').addEventListener('click', () => {
-  if(cart.length === 0) return;
+  if(shortlist.length === 0) return;
   if(hasSubmittedBefore()) openResubmitModal();
   else goSubmitNewPicks();
 });
@@ -3845,6 +3968,29 @@ document.getElementById('resubmitModal').addEventListener('click', (e) => {
 
 document.getElementById('searchInput').addEventListener('input', renderGrid);
 document.getElementById('searchBtn').addEventListener('click', renderGrid);
+
+function updateSortUI(){
+  const toggle = document.getElementById('sortToggle');
+  toggle.childNodes[0].textContent = sortMode ? `Sort: ${SORT_LABELS[sortMode]}` : 'Sort';
+  toggle.classList.toggle('has-selection', !!sortMode);
+  document.querySelectorAll('.sort-option').forEach(b => b.classList.toggle('active', b.dataset.sort === sortMode));
+}
+document.getElementById('sortToggle').addEventListener('click', (e) => {
+  e.stopPropagation();
+  const dropdown = document.getElementById('sortDropdown');
+  const isOpen = dropdown.classList.contains('open');
+  closeAllFilterDropdowns();
+  dropdown.classList.toggle('open', !isOpen);
+  e.currentTarget.setAttribute('aria-expanded', String(!isOpen));
+});
+document.querySelectorAll('.sort-option').forEach(btn => {
+  btn.addEventListener('click', () => {
+    sortMode = sortMode === btn.dataset.sort ? null : btn.dataset.sort;
+    updateSortUI();
+    closeAllFilterDropdowns();
+    renderGrid();
+  });
+});
 
 document.getElementById('pinsToggleBtn').addEventListener('click', (e) => {
   openPinsDrawer('list', e.currentTarget);
@@ -4078,6 +4224,10 @@ function showListing(contextLabel, fromHistory, categoryKey, categoryValue){
   document.getElementById('view-listing').style.display = '';
   document.getElementById('view-info').style.display = 'none';
   document.getElementById('directorySplit').classList.remove('mobile-detail-open');
+  // Every time the browsing page is (re)entered, start with the full-
+  // width directory and the profile panel closed, per request - not just
+  // on first load.
+  collapseProfilePanel();
   buildFilterPanel();
   renderGrid();
   renderPinsDrawer();
