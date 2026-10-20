@@ -34,8 +34,17 @@
   --accent-tint: #EFEAFD;
   --success: #401F68;
   --success-on-light: #401F68;
-  --line: #E9E3FA;
-  --line-strong: #DAD2F4;
+  /* A real green (2026-10-17), used only for "added to my list" cards in
+   the directory - kept separate from --success/--success-on-light above,
+   which this app deliberately maps to purple everywhere else. */
+  --list-added: #2E7D4F;
+  --list-added-tint: #E6F4EA;
+  /* Gray, not light purple (2026-10-17, per request) - every divider/
+     edge line in the app (card borders, panel borders, filter-dropdown
+     borders, etc.) reads off these two tokens, so this one change covers
+     all of them. */
+  --line: #E1E1E1;
+  --line-strong: #C9C9C9;
   --muted: #5C5A82;
   --warn: #E87518;
   /* Secondary accents - used sparingly for pins/icons/small marks only,
@@ -49,11 +58,36 @@
 *{ box-sizing: border-box; }
 body{
   margin:0;
+  /* Full-height app shell (per request) - header/toolbar take their own
+     natural height, #view-listing (when it's the active view) stretches
+     to fill whatever's left via the flex chain below, rather than JS
+     measuring and setting an inline pixel height. min-height (not
+     height) so the landing/info/category pages, which are taller than
+     one screen, still just grow the page and scroll normally - only
+     #view-listing's own flex:1 pulls it up to exactly fill the gap. */
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
   background-color: #fff;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.15 0 0 0 0 0.15 0 0 0 0 0.4 0 0 0 0.035 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   color: var(--ink);
   font-family: 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+/* Only while the browsing page is the active view (toggled in JS - see
+   showListing() and its sibling show*() functions) - min-height alone
+   doesn't cap #view-listing's own height, since flex-grow only
+   guarantees a MINIMUM fill, not a maximum; it'll happily grow taller
+   than 100dvh if its own content (the full alumni list) wants more
+   room, same as any other view. A hard height + overflow:hidden here is
+   what actually constrains that, handing the "where does the extra
+   content go" question down to .directory-left's own overflow-y:auto
+   instead of the page. Every other view keeps the plain min-height
+   version above - they're meant to grow past one screen and let the
+   page scroll normally. */
+body.listing-active{
+  height: 100dvh;
+  overflow: hidden;
 }
 :focus-visible{ outline: 2px solid var(--accent); outline-offset: 2px; }
 #submitBtn:focus-visible{ outline-color: var(--success); }
@@ -74,6 +108,9 @@ header.site{
   background: #fff;
   color: var(--ink);
   position: relative;
+  /* Natural height only, never stretched by body's own flex - #view-
+     listing is the one flexible piece (see its own comment). */
+  flex: 0 0 auto;
 }
 .hero-top{
   width: 100%;
@@ -110,26 +147,39 @@ header.site{
 }
 .hero-nav{
   position: absolute;
-  top: clamp(28px, 4vh, 48px);
+  /* Both reduced (2026-10-17, per request) - raises the logo/nav row a
+     bit and tightens the gap before the separator line, lifting that
+     line up with it. */
+  top: clamp(18px, 2.5vh, 32px);
   left: 0;
   right: 0;
   z-index: 4;
-  /* Separator line between the logo/nav row and the landing body. */
-  padding-bottom: clamp(12px, 1.8vh, 18px);
+  /* Separator line between the logo/nav row and the landing body -
+     thinner per request (was 2px). */
+  padding-bottom: clamp(8px, 1.2vh, 14px);
   border-bottom: 1px solid #CFCFCF;
 }
+/* Horizontal padding matches #heroSub.compact's own (the browsing
+   page's masthead) exactly - plain 6vw, no max-width/auto-margin
+   centering - so the logo and nav links sit at the same x-coordinates
+   on both pages, per request (2026-10-17; this used to be a separate
+   max-width:1320px/clamp() formula, which drifted from the browsing
+   page's at wide viewports). */
 .hero-nav-inner{
-  max-width: 1320px;
-  margin: 0 auto;
-  padding: 0 clamp(24px, 5vw, 64px);
+  padding: 0 6vw;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 28px;
 }
 .hero-logo{
-  font-family: 'Baskerville', 'Libre Baskerville', serif;
-  font-weight: 600;
+  font-family: 'Libre Baskerville', serif;
+  /* 700, not 600 (per request - consistent webfont rendering across
+     devices) - Libre Baskerville only actually ships Regular/Bold/
+     Italic weights; asking for 600 (a weight it doesn't have) left the
+     browser to pick whichever of those it felt was "closest",
+     inconsistently from device to device. */
+  font-weight: 700;
   font-size: 15px;
   letter-spacing: 0.01em;
   color: var(--ink);
@@ -168,8 +218,17 @@ header.site{
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 22px 6vw;
-  /* Same light-gray separator as the landing page's nav row. */
+  /* Tightened to match the landing nav's own reduced spacing (2026-10-
+     17, per request - "narrower" there meant this thinner vertical
+     band, applied site-wide now), was 22px 6vw. */
+  /* Asymmetric top/bottom (2026-10-17, was a flat 14px) matching
+     .hero-nav's own top/padding-bottom exactly - that's what actually
+     makes the logo land at the same y-coordinate on both pages, not
+     just a visually-similar one ("nav bar and logo position need to be
+     consistent across all pages", per request). */
+  padding: clamp(18px, 2.5vh, 32px) 6vw clamp(8px, 1.2vh, 14px);
+  /* Same light-gray separator as the landing page's nav row - thinner
+     now (per request), matching that page's own thinner divider. */
   border-bottom: 1px solid #CFCFCF;
 }
 #heroSub.compact .back-btn,
@@ -178,17 +237,33 @@ header.site{
 #heroSub.compact .top-bar-light{ position: static; }
 
 /* ---------- HERO COPY ---------- */
-/* Shares .hero-nav-inner's exact max-width/margin/padding-left formula
-   so the headline's left edge lines up with the logo above it at every
-   viewport width, instead of drifting apart via two separate clamps. */
-/* Vertically centered in .hero-top (the 100vh hero section) rather than
-   pinned near the nav - per request, so the whole text block (headline
-   through the button) sits in the middle of the page regardless of
-   viewport height. Horizontal placement (margin: 0 auto within
-   left/right: 0) is unchanged from the old in-flow version. */
+/* Used to share .hero-nav-inner's exact max-width/margin/padding-left
+   formula so the headline's left edge lined up with the logo above it -
+   .hero-nav-inner's own horizontal padding changed (2026-10-17, to match
+   the browsing page's masthead instead - see its own comment) and this
+   was deliberately left as-is per that request, so that alignment no
+   longer holds. */
+/* Vertically positioned in .hero-top (the 100vh hero section), so the
+   whole text block (headline through the button) holds its tuned
+   position regardless of viewport height. Horizontal placement
+   (margin: 0 auto within left/right: 0) is unchanged from the old
+   in-flow version.
+   top: 33.5% below is just the pre-JS fallback (first paint, or JS
+   disabled) - positionHeroCopy() in the script overrides it on load/
+   resize with the same 33.5% value clamped to never sit above a safe
+   distance below the nav row, which a flat percentage alone can't do
+   (33.5% of a short viewport can collide with the nav, where 33.5% of a
+   tall one won't - see that function's own comment). 33.5% itself
+   (2026-10-17) was hand-tuned so "Northwestern"'s baseline lines up
+   with the tower illustration's tip at a typical viewport, per request
+   - it's not read from or derived from the image's own size in any
+   way, so adjusting .hero-tower-decor's width later won't move this
+   text. If the alignment ever needs re-tuning, re-measure both and
+   adjust the 0.335 figure in positionHeroCopy() (and this fallback to
+   match) - don't wire the two together programmatically. */
 .hero-copy{
   position: absolute;
-  top: 38%;
+  top: 33.5%;
   left: 0;
   right: 0;
   transform: translateY(-50%);
@@ -233,8 +308,13 @@ header.site{
   cursor: pointer;
   padding: 4px;
 }
-.top-bar-light{ position: absolute; top: 32px; right: 6vw; left: auto; }
-.masthead-logo{ position: absolute; top: 32px; left: 6vw; }
+/* top: clamp(18px, 2.5vh, 32px) (2026-10-17, was a flat 32px) - matches
+   .hero-nav's own tightened value, per request ("nav bar and logo
+   position need to be consistent across all pages") - this is the
+   About/FAQ/Feedback masthead used on the category and info pages,
+   which had been left at the original, untightened offset. */
+.top-bar-light{ position: absolute; top: clamp(18px, 2.5vh, 32px); right: 6vw; left: auto; }
+.masthead-logo{ position: absolute; top: clamp(18px, 2.5vh, 32px); left: 6vw; }
 /* Hidden on the About/FAQ/Feedback masthead per request - the back button
    is enough there. Still shown in the compact (directory) masthead above,
    where it's the click-to-go-home shortcut requested separately. */
@@ -245,7 +325,7 @@ header.site{
   border: none;
   color: var(--ink);
   font-size: 15px;
-  font-family: 'Baskerville', 'Libre Baskerville', serif;
+  font-family: 'Libre Baskerville', serif;
   font-weight: 500;
   letter-spacing: normal;
   text-transform: none;
@@ -264,6 +344,40 @@ header.site{
 
 .info-layout{
   padding: 12px 6vw 60px;
+}
+
+/* ---------- EMBEDDED CLAIM FORM ---------- */
+.claim-form-intro{
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 12px 6vw 0;
+  color: var(--muted);
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
+}
+.claim-form-frame-wrap{
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px 6vw 60px;
+}
+.claim-form-frame{
+  width: 100%;
+  /* Google's own embedded-form pages are a fixed-ish width design that
+     reliably needs around this much vertical room for a form with a
+     handful of short-answer questions - there's no reliable way to ask
+     the iframe its own content height across origins, so this is a
+     reasonable fixed floor rather than a measured value (unlike most
+     sizing elsewhere in this app). Comfortably scrolls inside the
+     iframe itself if a given form needs more. */
+  height: 1200px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+}
+@media (max-width: 700px){
+  .claim-form-frame{ height: 1400px; }
 }
 
 /* ---------- REVIEW YOUR PINNED ALUMNI ---------- */
@@ -296,7 +410,7 @@ header.site{
   gap: 12px;
 }
 .review-card-name{
-  font-family: 'Baskerville', 'Libre Baskerville', serif;
+  font-family: 'Libre Baskerville', serif;
   font-weight: 500;
   font-size: 19px;
 }
@@ -360,7 +474,7 @@ header.site{
   gap: 16px;
   margin-top: 32px;
   padding-top: 24px;
-  border-top: 1px solid var(--line);
+  border-top: 2px solid var(--line);
 }
 .review-back-btn{
   background: none;
@@ -420,7 +534,7 @@ header.site{
 .about-body strong{
   color: #453F3A;
   text-decoration: underline;
-  font-family: 'Baskerville', 'Libre Baskerville', serif;
+  font-family: 'Libre Baskerville', serif;
   display: inline-block;
   background: var(--paper);
   border: 1px solid var(--line-strong);
@@ -433,7 +547,7 @@ header.site{
 
 .faq-item{
   padding: 68px 0;
-  border-top: 1px solid var(--line);
+  border-top: 2px solid var(--line);
 }
 .faq-item:first-child{ border-top: none; padding-top: 24px; }
 .faq-q{
@@ -480,7 +594,7 @@ header.site{
 
 /* ---------- LANDING HERO: "explore your path" ---------- */
 header.site h1{
-  font-family: 'Baskerville', 'Libre Baskerville', serif;
+  font-family: 'Libre Baskerville', serif;
   font-weight: 400;
   font-style: normal;
   font-size: clamp(64px, 5vw, 82px);
@@ -610,7 +724,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   }
 }
 #heroSub h2{
-  font-family: 'Baskerville', 'Libre Baskerville', serif;
+  font-family: 'Libre Baskerville', serif;
   font-weight: 500;
   font-size: clamp(29px, 4vw, 45px);
   text-transform: uppercase;
@@ -645,9 +759,9 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   text-align: left;
   background: none;
   border: none;
-  border-top: 1px solid var(--line);
+  border-top: 2px solid var(--line);
   padding: 20px 0;
-  font-family: 'Baskerville', 'Libre Baskerville', serif;
+  font-family: 'Libre Baskerville', serif;
   font-size: 18px;
   font-style: italic;
   color: var(--ink);
@@ -655,68 +769,186 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   text-wrap: balance;
 }
 .category-option:first-child{ border-top: none; padding-top: 0; }
-.category-option:last-child{ border-bottom: 1px solid var(--line); }
+.category-option:last-child{ border-bottom: 2px solid var(--line); }
 .category-option:hover{ color: var(--accent); }
 @media (max-width: 700px){
   .category-option{ font-size: 16px; }
 }
-#view-listing{ background: #fff; }
 /* ---------- SPLIT-VIEW DIRECTORY (2026-10-16) ---------- */
 /* Height is set inline by sizeDirectorySplit() (measures the masthead's
    real rendered height rather than guessing a fixed px value - same
    "measure, don't assume" approach used for the hero tower sizing) so
    the two panels fill exactly the space below the nav, no page-level
    scroll. */
-/* Shared toolbar - search, all 5 filters, Clear all, Review & Submit -
-   now spans the full page width above both panels (2026-10-17; was
-   inside .directory-left, with Review & Submit a separate rotated edge
-   tab). */
-.directory-toolbar{
+/* Matches the masthead's own left/right bounds exactly (per request -
+   "directory column should start where the IMC CONNECTS logo starts,
+   profile column should end where the nav bar ends") - same flat 6vw
+   .hero-nav-inner itself uses, not a centered max-width column. The
+   previous max-width:1280px/clamp() version (which this replaced) read
+   as "compressed" and left large, ever-growing cream margins on a wide
+   monitor once the viewport passed 1280px - fluid 6vw never does that,
+   it just keeps pace with the viewport at any width. Directory-left's
+   flex-basis is a plain percentage of this container's width, so the
+   32/68 directory/profile split ratio holds regardless of how wide
+   this container itself ends up being. */
+/* Textured image (per request), tiled since the margin area's height
+   varies with content/viewport - #F4F2EE stays as the background-color
+   fallback for the moment before it loads (or if it fails to). */
+/* Fills whatever's left below the masthead (see body's own comment) -
+   display:flex here (not the default block) is what lets its own
+   children (the toolbar, natural height, and the directory/profile
+   card below it) participate in that same fill-remaining-space chain,
+   down to .directory-split itself. display is switched to 'flex' in JS
+   (showListing()) rather than plain '' specifically because of this. */
+#view-listing{
+  background-color: #F4F2EE;
+  background-image: url("bg-texture.jpg");
+  background-repeat: repeat;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+/* The directory/profile card's own wrapper (not the toolbar's - that's
+   nested inside .directory-toolbar, a grandchild, so this direct-child
+   selector reaches only the one we want) - continues the fill-
+   remaining-space chain down into .directory-split. */
+#view-listing > .listing-container{
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+/* MARGIN, not padding (bugfix, per request - "the margins are not
+   visible at all") - padding paints as part of the box, so the white
+   background used to fill the side gutter too, completely hiding the
+   textured margin behind it. Margin leaves that gutter empty instead,
+   actually exposing #view-listing's background there. Halved to 3vw
+   (was 6vw, per request - "reduce each of the current margins in half
+   by extending the directory accordingly"). */
+.listing-container{
+  margin: 0 3vw;
+  background: #fff;
+  border-radius: 12px;
+}
+/* Shared toolbar - search, all 5 filters, Clear all, Review & Submit.
+   Back to being seamlessly joined to the directory/profile card below
+   it (per request - "nevermind, should not be their own card, restore
+   to how it was") - a shared border instead of top/bottom margins. */
+.directory-toolbar > .listing-container{
   display: flex;
   flex-direction: column;
   gap: 14px;
-  padding: 18px 6vw;
-  border-bottom: 1px solid var(--line);
+  padding-top: 18px;
+  padding-bottom: 18px;
+  border-bottom: 2px solid var(--line);
 }
-.directory-toolbar .search-box{ width: 100%; max-width: none; }
+/* .search-box's own `flex: 1 1 280px` sets a WIDTH basis in its other
+   context (a row-direction flex parent) - .directory-toolbar is
+   column-direction now, where that same flex-basis would instead set a
+   280px HEIGHT, blowing the search row up to 280px tall. Override back
+   to a plain block here. Inset 28px on both sides (per request - "align
+   with #alumni available", which sits that same 28px in from the card
+   edge via its own padding) rather than running the full card width -
+   the default stretch (column-flex's own default) still sizes it,
+   margin just pulls both edges in symmetrically. */
+.directory-toolbar .search-box{ flex: none; max-width: none; margin: 0 28px; }
 .toolbar-row2{
   display: flex;
   align-items: center;
   gap: 16px;
   flex-wrap: wrap;
 }
-.toolbar-row2 .filter-bar{ flex: 1 1 auto; margin-top: 0; }
+/* Left-inset to match where #alumni available sits (per request), same
+   28px as the search box above it - Review & Submit (the row's other
+   child) stays where it was, flush with the card's own right edge. */
+.toolbar-row2 .filter-bar{ flex: 1 1 auto; margin-top: 0; margin-left: 28px; }
+/* Separates the count/sort row from the alumni listings below it.
+   Runs the width of #directoryLeft itself (which has no side padding of
+   its own, so no margin trick is needed on either side) - per request,
+   this should NOT bleed any further left than that into the page's
+   outer padding/margin, unlike the profile-side dividers. */
 .directory-list-header{
   flex: 0 0 auto;
-  padding: 16px 6vw 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* Shorter row (per request, twice now - "too tall") - was 16px, then
+     10px, 28px throughout. */
+  padding: 6px 28px;
+  /* Thinner (per request) - was 2px, like the site's other dividers;
+     this one is now 1px. */
+  border-bottom: 1px solid var(--line);
   font-family: 'Inter', sans-serif;
   font-size: 12.5px;
   color: var(--muted);
 }
+/* Sort (2026-10-17, revised again) - a plain icon button here read as
+   unclear/undiscoverable, per request; back to a labeled pill (like the
+   filters) that spells out the active sort, e.g. "Sort: Name A–Z". */
+.sort-label-btn{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 20px;
+  border: 1.5px solid var(--line-strong);
+  background: none;
+  color: var(--muted);
+  /* Shorter (per request, along with .directory-list-header's own
+     padding) - was 7px 12px. */
+  padding: 5px 12px;
+  font-family: 'Inter', sans-serif;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.sort-label-btn svg{ transition: transform 150ms ease; flex-shrink: 0; }
+.sort-label-btn:hover{ border-color: var(--accent); color: var(--accent); }
+.sort-dropdown.open .sort-label-btn{ border-color: var(--accent); color: var(--accent); }
+.sort-dropdown.open .sort-label-btn svg{ transform: rotate(180deg); }
+.sort-dropdown .filter-dropdown-panel{ left: auto; right: 0; }
 .directory-split{
   display: flex;
   align-items: stretch;
   overflow: hidden;
   position: relative;
+  /* Fills the rest of #view-listing's own height (set via pure CSS flex
+     now, not a JS-measured inline height - see body's comment). */
+  flex: 1 1 auto;
+  min-height: 0;
 }
 .directory-left{
-  /* Width is adjustable (sizeableLeftWidth(), set as an inline
-     flex-basis on this element) - 35% is just the starting point. */
-  flex: 0 0 35%;
-  min-width: 280px;
+  /* Width is adjustable (initDirectoryResizer(), set as an inline
+     flex-basis on this element) - clamp() is just the starting point,
+     so the default scales with viewport width instead of a flat
+     percentage, per the responsive-hierarchy spec (2026-10-20). */
+  flex: 0 0 clamp(340px, 31vw, 480px);
+  min-width: 300px;
   display: flex;
   flex-direction: column;
+  /* No border here any more (per request - "3 separator lines... just
+     have 1") - the resizer's own ::before hairline is the single divider
+     between directory and profile now; this border plus .directory-
+     right's matching one were making it read as 3 lines bunched
+     together in the gutter. */
 }
 .directory-list{
   flex: 1 1 auto;
   min-height: 0;
+  /* Side inset for the card-style rows below (per request) - was 0,
+     back when rows ran edge-to-edge with a border-bottom divider
+     between them instead of being discrete cards. Buffer space after
+     the last card so the list's scroll doesn't stop flush against it. */
+  padding: 10px 14px 48px;
   overflow-y: auto;
 }
 /* Draggable divider - see initDirectoryResizer(). A 16px hit target
    (bigger than before, per request, for easier grabbing/visibility) that
    draws a hairline down its middle, highlighting on hover/drag. The
-   collapse control (2026-10-17) lives directly on it now, as a small
-   chevron button at its vertical midpoint - double-clicking/double-
+   collapse control lives directly on it now, as a small chevron button,
+   centered on the divider line (per request) - double-clicking/double-
    tapping it resets the split back to the default widths. */
 .directory-resizer{
   flex: 0 0 16px;
@@ -736,15 +968,19 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   top: 0;
   bottom: 0;
   left: 50%;
-  width: 1px;
+  width: 2px;
   background: var(--line);
   transform: translateX(-50%);
 }
 .directory-resizer:hover::before,
 .directory-resizer.dragging::before{ background: var(--accent); }
+/* Slightly bigger (2026-10-17, was 24x44 - "more discoverable", per
+   request) - the resizer hairline itself stays 16px wide; this just
+   overflows it a bit, same as before. */
 .directory-resizer-collapse{
-  width: 24px;
-  height: 44px;
+  /* Thinner (per request) - was 28px. */
+  width: 20px;
+  height: 52px;
   border-radius: 10px;
   border: 1.5px solid var(--line-strong);
   background: #fff;
@@ -760,84 +996,149 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 .directory-resizer.dragging .directory-resizer-collapse{ border-color: var(--accent); color: var(--accent); }
 .directory-right{
   flex: 1 1 auto;
-  min-width: 320px;
-  overflow-y: auto;
-  padding: 28px 6vw 60px;
+  min-width: 480px;
+  /* No scrolling at all now (per request - "get rid of the scroll
+     function in profile view completely"), was overflow-y:auto. The
+     layout is compact enough that everything should fit without it;
+     this also means anything that somehow still doesn't fit clips
+     instead of scrolling, which is the explicit trade-off asked for. */
+  overflow: hidden;
+  /* Trimmed top/bottom (was 24px/48px, then 16px/20px, per request -
+     "shouldn't need to scroll, everything should fit"). */
+  padding: 12px 28px 12px;
 }
 /* Collapsing the profile panel (2026-10-17): hides it and the resizer,
-   the directory expands to fill the width, and a floating "›" docks at
-   the right edge to reopen it. Selection and the stored panel width are
-   untouched by this - collapsing/expanding only toggles this class. */
+   the directory expands to fill the width. Selection and the stored
+   divider width are untouched by this - collapsing/expanding only
+   toggles this class. Reopening (2026-10-17) happens from any row's own
+   chevron/click, same as opening any other alum - the separate floating
+   "›" edge button this used to dock was redundant with that and has
+   been removed, per request. */
 .directory-split.profile-collapsed .directory-right,
 .directory-split.profile-collapsed .directory-resizer{ display: none; }
 .directory-split.profile-collapsed .directory-left{ flex: 1 1 auto; max-width: none; }
-.directory-reopen-btn{
-  position: absolute;
-  top: 50%;
-  right: 0;
-  transform: translateY(-50%);
-  width: 26px;
-  height: 56px;
-  border-radius: 8px 0 0 8px;
-  background: #fff;
-  border: 1px solid var(--line);
-  border-right: none;
-  color: var(--muted);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: -4px 0 12px rgba(37,37,100,0.1);
-}
-.directory-reopen-btn:hover{ color: var(--accent); border-color: var(--accent); }
+/* Grid (2026-10-17, revised again) - two equal 1fr tracks (info, and
+   the spots+chevron group) flank the centered location column, so
+   location sits truly centered relative to the name/role/company block
+   and the spots-available badge, per request - not just evenly spaced
+   among 3+ items as an earlier pass had it. */
+/* Cards, not a flat divided list (per request: "get rid of the deep
+   divider lines for the alumni listings and instead have them as cards
+   with very subtle vertical dividers") - each row is its own bordered,
+   shadowed card with a gap below it instead of a shared border-bottom
+   line; the only dividers left are the thin ones between a card's own
+   columns (see .directory-entry-location-inline/.directory-entry-right
+   below), not between cards. */
 .directory-entry{
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  justify-content: space-between;
   gap: 14px;
-  padding: 16px 6vw;
+  padding: 13px 28px;
+  margin-bottom: 10px;
   cursor: pointer;
-  border: none;
-  border-bottom: 1px solid var(--line);
-  border-left: 3px solid transparent;
-  background: none;
+  /* Plain 1px border on all 4 sides by default (bugfix - the left side
+     used to default to transparent, so the card only had a visible edge
+     on 3 of its 4 sides until selected). .selected/.in-list below widen
+     just the left side and color it as their own accent, overriding this. */
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(32, 27, 29, 0.05);
   width: 100%;
   text-align: left;
   font: inherit;
   color: inherit;
 }
+.directory-entry:last-child{ margin-bottom: 0; }
 .directory-entry:hover{ background: var(--paper); }
 .directory-entry.selected{
   background: var(--accent-tint);
-  border-left-color: var(--accent);
+  border-left: 3px solid var(--accent);
 }
+/* Added-to-list (2026-10-17) - a real green, distinct from the purple
+   "currently viewing" selected state above (and from --success-on-light,
+   which this app deliberately maps to purple elsewhere) since the user
+   asked for these two states to read as visibly different colors. Comes
+   after .selected so it wins when a card is both selected and in the
+   list. */
+.directory-entry.in-list{
+  background: var(--list-added-tint);
+  border-left: 3px solid var(--list-added);
+}
+.directory-entry.in-list .directory-entry-chevron{ color: var(--list-added); }
 .directory-entry-info{ min-width: 0; }
 /* Natural wrapping, no truncation/ellipsis and no dynamic font shrink
-   for long names - per explicit request for this list. */
+   for long names - per explicit request for this list. Semi-bold per
+   request (2026-10-17; was briefly full bold - toned down one step). */
 .directory-entry-name{
-  font-family: 'Baskerville', 'Libre Baskerville', serif;
-  font-weight: 400;
-  font-size: 19px;
+  font-family: 'Libre Baskerville', serif;
+  font-weight: 700; /* Libre Baskerville only ships 400/700 - 600 falls back inconsistently across browsers */
+  font-size: 17px;
   line-height: 1.25;
   color: var(--ink);
 }
-.directory-entry-location{
+/* Directory-card-scoped role/company sizing (2026-10-20 density pass) -
+   .alum-role/.alum-company are shared with the profile pane (see
+   .profile-info .alum-role/.alum-company below), so these overrides are
+   scoped to .directory-entry-info specifically rather than changing the
+   shared base rule. */
+.directory-entry-info .alum-role{ font-size: 14px; margin-top: 3px; }
+.directory-entry-info .alum-company{ font-size: 13px; margin-top: 1px; }
+/* Location + spots-available (2026-10-17, revised again) - location is
+   its own centered grid column; spots-available now groups with the
+   chevron in the right-hand track instead of sitting beside location,
+   so location's centering is relative to info and spots specifically,
+   not diluted by the chevron's position. Both hide once the profile
+   panel is open (the card has no room for them there - no stacked
+   location take-over any more either, per request: when both panels are
+   open, location just isn't shown on the card at all). Sized to match
+   .alum-company (13.5px) in this left-column context only - the profile
+   panel's own badge keeps its usual smaller size. */
+.directory-entry-location-inline{
   display: flex;
   align-items: center;
   gap: 4px;
-  margin-top: 6px;
+  justify-self: center;
+  white-space: nowrap;
   font-family: 'Inter', sans-serif;
-  font-size: 12px;
+  font-size: 13.5px;
   color: var(--muted);
 }
 .directory-entry-right{
   display: flex;
   align-items: center;
   gap: 10px;
-  flex-shrink: 0;
+  justify-self: end;
 }
+.directory-entry-spots .capacity-badge{ font-size: 13.5px; }
 .directory-entry-chevron{ color: var(--muted); flex-shrink: 0; }
 .directory-entry.selected .directory-entry-chevron{ color: var(--accent); }
+/* .directory-entry-right hidden outright now, not just its children,
+   AND the grid itself collapses to a single column (2026-10-17 bugfix)
+   - an explicit grid-template-columns track still claims its defined
+   share of the row's width even once its item is display:none (grid
+   tracks are sized independently of occupancy), so this was quietly
+   halving the name column's real width in compact mode and wrapping
+   names that had plenty of room - this is what the "names should stay
+   on one line" bug report several turns later traced back to. */
+.directory-split:not(.profile-collapsed) .directory-entry{ grid-template-columns: 1fr; }
+.directory-split:not(.profile-collapsed) .directory-entry-location-inline,
+.directory-split:not(.profile-collapsed) .directory-entry-right{ display: none; }
+/* Shuffle-in (2026-10-17, per request) - plays once per card whenever a
+   filter or sort change re-renders the list (see renderDirectoryList's
+   pendingShuffle flag), so it's visually obvious something changed even
+   though the DOM nodes themselves are just rebuilt in place. Not played
+   on every render (e.g. plain selection or search-as-you-type) - only
+   filter/sort changes trigger it. Staggered per-card delay (set inline
+   via JS) gives it a "shuffling" feel rather than a flat fade. */
+@keyframes directoryEntryShuffle{
+  from{ opacity: 0; transform: translateY(8px) scale(0.97); }
+  to{ opacity: 1; transform: translateY(0) scale(1); }
+}
+.directory-entry.shuffle-in{
+  animation: directoryEntryShuffle 320ms cubic-bezier(.22,.8,.32,1) both;
+}
 .directory-empty{
   padding: 48px 28px;
   color: var(--muted);
@@ -864,7 +1165,26 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   padding: 0;
 }
 .profile-back-btn:hover{ color: var(--ink); }
-.profile-availability{ display: flex; align-items: center; gap: 12px; }
+/* Right-aligned (per request) so Add to my list's own right edge lines
+   up with the toolbar's Review & Submit button. The toolbar sits in its
+   own .listing-container directly, while this row is nested inside
+   .directory-right's additional fixed 28px padding on top of that - the
+   negative margin-right cancels that extra inset so the two actually
+   land on the same edge, not just the same relative distance within two
+   differently-padded containers. Back to its own full-width row ABOVE
+   the identity block (2026-10-20 responsive-hierarchy spec) - its
+   position is then stable regardless of name/title length, since it no
+   longer shares a baseline with text that can wrap to 2 lines. */
+.profile-availability{ display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-right: -28px; flex-shrink: 0; }
+/* Gap below the action row, above the identity block - since the
+   column no longer relies on justify-content:flex-end to space things
+   out, this is now the only thing separating them. */
+.profile-info-identity{ margin-top: 10px; }
+/* Top-anchored, not vertically centered in the portrait's height (per
+   spec - "eliminate excessive blank space, do not vertically center the
+   identity block in a large hero area") - default column flow (no
+   justify-content override) just stacks action row, then identity,
+   then location/LinkedIn, from the top. */
 .profile-header{ display: flex; gap: 28px; align-items: flex-start; }
 /* Portrait + text stack vertically once the panel gets narrow (resized
    small, or on a mobile detail view) - toggled by a ResizeObserver on
@@ -872,11 +1192,13 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    query, since the panel's width changes from dragging the divider, not
    just from the viewport changing. */
 .directory-right.narrow .profile-header{ flex-direction: column; align-items: flex-start; }
-.directory-right.narrow .profile-portrait{ width: 140px; height: 175px; }
+.directory-right.narrow .profile-portrait{ width: 145px; height: 173px; }
+/* 1.5x larger (per request) - was 156x185 (which itself was reduced
+   from 176x220 on 2026-10-17 to tighten the header row). */
 .profile-portrait{
   flex-shrink: 0;
-  width: 176px;
-  height: 220px;
+  width: 172px;
+  height: 205px;
   border-radius: 8px;
   background: var(--paper);
   border: 1px solid var(--line-strong);
@@ -884,23 +1206,58 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   align-items: center;
   justify-content: center;
   color: var(--line-strong);
+  overflow: hidden;
 }
+/* Real photo, when the alum has one uploaded (see portraitImgHtml()) -
+   fills the same box the placeholder SVG used to center itself in,
+   cropped to it rather than distorted. */
+.profile-portrait-img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+/* Hidden by default - only shown once handlePortraitImgError() has
+   exhausted every known extension for this alum's photo without one
+   actually loading (i.e. no photo has been uploaded for them yet). */
+.profile-portrait-fallback{ display: none; }
+/* Top-anchored column (2026-10-20 spec) - action row, then identity
+   block, then location/LinkedIn, in natural top-down flow. flex:1 1
+   auto still grabs the rest of .profile-header's width, which is what
+   lets .profile-availability's own justify-content:flex-end land flush
+   with the toolbar's Review & Submit button. */
+.profile-info{
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+/* name+title+company as one tight cluster (2026-10-20 spec exact
+   values) - no default heading margin, so .alum-role's own margin-top
+   is the only gap between them. */
 .profile-name{
-  font-family: 'Baskerville', 'Libre Baskerville', serif;
-  font-weight: 400;
-  font-size: 32px;
-  line-height: 1.15;
+  font-family: 'Libre Baskerville', serif;
+  font-weight: 700; /* Libre Baskerville only ships 400/700 - 600 falls back inconsistently across browsers */
+  font-size: 27px;
+  line-height: 1.05;
+  margin: 0;
   color: var(--ink);
 }
-.profile-info .alum-role{ margin-top: 8px; font-size: 18px; }
-.profile-info .alum-company{ font-size: 15px; margin-top: 4px; }
-.profile-info .alum-meta{ margin-top: 16px; font-size: 14px; }
+.profile-info .alum-role{ margin-top: 2px; font-size: 15px; line-height: 1.2; }
+.profile-info .alum-company{ font-size: 14px; line-height: 1.2; margin-top: 1px; }
+.profile-info .alum-meta{ margin-top: 7px; font-size: 14px; }
+/* Edge-to-edge on both sides, per request ("run to the edge of the
+   white content column"). .directory-right's own 28px padding is the
+   only inset to cancel on either side now - .listing-container itself
+   uses margin rather than padding (see its own comment), so it no
+   longer adds any further distance to bleed past on the right. No
+   margin-bottom either, so the expertise section right below starts
+   flush against this line. */
 .profile-divider{
-  margin: 28px 0;
-  border-top: 1px solid var(--line);
+  margin: 20px -28px 0 -28px;
+  border-top: 2px solid var(--line);
 }
 .profile-sections .alum-columns{ margin-top: 0; }
-.profile-sections .ask-me-about{ margin-top: 28px; }
 .search-box{
   flex: 1 1 280px;
   border-bottom: 1.5px solid var(--ink);
@@ -913,10 +1270,16 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 .search-box:focus-within{ border-bottom-color: var(--accent); }
 .search-box input{
   border:none; outline:none; background:transparent;
-  font-size: 16px; width:100%; font-family: 'Baskerville', 'Libre Baskerville', serif; font-style: italic;
+  /* Reduced to match the filter/sort buttons' own text size (per
+     request) - was 16px. */
+  font-size: 13.5px; width:100%; font-family: 'Libre Baskerville', serif; font-style: italic;
   color: var(--ink);
 }
-.search-box input::placeholder{ color: var(--muted); }
+/* Darker than the usual --muted (2026-10-17, per request - "increase
+   the contrast... while retaining its italic style") - a one-off, not a
+   change to --muted itself, which other, lower-emphasis text still
+   relies on. */
+.search-box input::placeholder{ color: #3D3A5C; opacity: 1; }
 .search-btn{
   background:none; border:none; padding:0; cursor:pointer;
   color: var(--muted); display:flex; flex-shrink:0;
@@ -960,6 +1323,12 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 }
 .pins-toggle-btn:hover{ background: var(--accent-deep); border-color: var(--accent-deep); }
 .pins-toggle-btn.active{ background: var(--success-on-light); border-color: var(--success-on-light); color: #fff; }
+/* Muted (not disabled - it still opens the, then-empty, list) while
+   nothing is shortlisted yet, so the "N/5" count reads as informational
+   rather than a false sense of progress. */
+.pins-toggle-btn.is-empty{ background: var(--paper); border-color: var(--line-strong); color: var(--muted); }
+.pins-toggle-btn.is-empty:hover{ background: var(--paper); border-color: var(--line-strong); }
+.pins-toggle-btn.is-empty .pins-count{ color: var(--muted); }
 .pins-count{ color: rgba(255,255,255,0.8); }
 
 .result-line{
@@ -992,13 +1361,15 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   border: 1.5px solid var(--ink);
   border-radius: 8px;
   cursor: pointer;
-  font-size: 13.5px;
+  /* Matches .sort-label-btn's own size now, both font and padding (per
+     request) - was 13.5px/8px 14px. */
+  font-size: 12.5px;
   font-weight: 500;
-  /* The pill buttons themselves (Industry, Marketing Area, Location...)
-     are Baskerville - the dropdown contents (checkboxes, region labels)
-     stay Inter, per request. */
-  font-family: 'Baskerville', 'Libre Baskerville', serif;
-  padding: 8px 14px;
+  /* Sans-serif now (per request) - was Baskerville, matching the
+     dropdown contents (checkboxes, region labels) which were already
+     Inter. */
+  font-family: 'Inter', sans-serif;
+  padding: 5px 12px;
   color: var(--ink);
 }
 .filter-dropdown-toggle:hover{ border-color: var(--accent); color: var(--accent); }
@@ -1072,7 +1443,18 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
    flyout anchors to that specific row, not the dropdown panel's corner. */
 .location-regions{ display: flex; flex-direction: column; gap: 4px; min-width: 200px; }
 .location-region{ position: relative; }
-.location-region + .location-region{ border-top: 1px solid var(--line); padding-top: 10px; margin-top: 6px; }
+/* Negative margins matching .filter-dropdown-panel's own 18px side
+   padding (2026-10-17, per request) - runs this divider edge-to-edge
+   across the dropdown instead of just the inset content width. */
+.location-region + .location-region{
+  border-top: 2px solid var(--line);
+  padding-top: 10px;
+  margin-top: 6px;
+  margin-left: -18px;
+  margin-right: -18px;
+  padding-left: 18px;
+  padding-right: 18px;
+}
 .location-region-toggle{
   display: flex;
   align-items: center;
@@ -1114,7 +1496,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   font-style: italic;
   color: var(--muted);
 }
-.filter-checkboxes{ display:flex; flex-direction: column; align-items: flex-start; gap: 8px; font-size: 13.5px; text-align: left; white-space: nowrap; }
+.filter-checkboxes{ display:flex; flex-direction: column; align-items: stretch; gap: 8px; font-size: 13.5px; text-align: left; white-space: nowrap; }
 .filter-checkbox-option{
   display:flex;
   align-items:center;
@@ -1124,6 +1506,10 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   text-align: left;
   font-family: 'Inter', sans-serif;
 }
+/* Thinner (was 2px) and now runs the full width of the card (per
+   request) - align-items:stretch above (was flex-start) is what lets
+   this border actually reach both edges instead of stopping at the
+   label's own checkbox+text content width. */
 .filter-select-all{
   font-weight: 600;
   padding-bottom: 8px;
@@ -1173,7 +1559,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   .directory-left{ flex: 1 1 auto; max-width: none; }
   /* Resize/collapse are desktop-only concepts - mobile already has its
      own full-screen detail pattern below. */
-  .directory-resizer, .directory-reopen-btn{ display: none !important; }
+  .directory-resizer{ display: none !important; }
   /* The list's own height is auto here (.directory-split isn't given a
      fixed height below 1024px - see sizeDirectorySplit), so it just
      flows with the page instead of scrolling in its own box. The detail
@@ -1183,6 +1569,11 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   .directory-right{
     display: none;
     max-width: none;
+    /* Desktop's 480px floor (keeps the split-view profile panel usable)
+       would otherwise force this full-screen mobile view wider than the
+       viewport on phones narrower than 480px, causing horizontal
+       overflow - reset to 0 here since this is no longer a side panel. */
+    min-width: 0;
     position: fixed;
     top: var(--content-top, 70px);
     left: 0;
@@ -1197,7 +1588,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   .directory-split.mobile-detail-open .directory-right{ display: block; }
   .profile-back-btn{ display: inline-block; }
   .profile-toolbar{ justify-content: space-between; }
-  .profile-portrait{ width: 120px; height: 150px; }
+  .profile-portrait{ width: 180px; height: 225px; }
   .profile-name{ font-size: 26px; }
   .profile-header{ gap: 18px; }
 }
@@ -1278,6 +1669,9 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   gap: 6px;
 }
 .capacity-icon{ color: var(--ink); flex-shrink: 0; }
+/* Matches .add-btn's own font-size (13.5px), per request - only in the
+   profile panel's top row, where the two sit right next to each other. */
+.profile-availability .capacity-badge{ font-size: 13.5px; }
 .capacity-badge{
   display: inline-flex;
   align-items: center;
@@ -1303,7 +1697,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 .alum-capacity{ margin-top: 12px; }
 
 .alum-name{
-  font-family: 'Baskerville', 'Libre Baskerville', serif;
+  font-family: 'Libre Baskerville', serif;
   font-weight: 400;
   font-size: 27px;
   letter-spacing: -0.005em;
@@ -1328,7 +1722,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 }
 .alum-role{
   font-family: 'Inter', sans-serif;
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 400;
   color: var(--ink);
   margin-top: 4px;
@@ -1353,7 +1747,11 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   color: var(--accent);
   margin-top: 2px;
 }
-.alum-company-note{ display: block; font-size: 13.5px; margin-top: 1px; }
+/* em-based (2026-10-17, was a flat 13.5px that happened to equal the
+   card's own .alum-company size in some contexts) - "slightly smaller"
+   than whichever parent (card or profile) it's actually in, per
+   request, rather than a fixed px that isn't always smaller. */
+.alum-company-note, .alum-role-note{ display: block; font-size: 0.82em; margin-top: 1px; color: var(--muted); }
 .capacity-line{ font-size: 12px; margin-top: 8px; color: var(--muted); }
 .capacity-line strong{ color: var(--accent); font-weight: 600; }
 .capacity-line.full strong{ color: var(--warn); }
@@ -1379,38 +1777,41 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 .alum-availability-line .format-icon{ margin-top: 2px; }
 /* Shared small-caps section label - Industry/Experience/Marketing
    Expertise/Ask me about all use this same treatment, matching the
-   reference page's labeled-field look. */
+   reference page's labeled-field look. 15px per the 2026-10-20 type
+   scale (12/13/14/15/17/27px). */
 .field-label{
   display: block;
-  font-family: 'Inter', sans-serif;
-  font-size: 12px;
+  font-family: 'Libre Baskerville', serif;
+  font-size: 15px;
   letter-spacing: 0.01em;
   text-transform: none;
   color: var(--accent-deep);
   margin-bottom: 6px;
   font-weight: 700;
 }
-.ask-me-about .field-label{ margin-bottom: 8px; }
-/* Industry Expertise + Marketing Expertise side by side as two columns
-   - "Ask me about" is a separate block rendered after this one, so it's
-   unaffected and stays full-width below. Back to row on request (2026-
-   10-15); an earlier pass had stacked these, see git history. */
+/* Industry Expertise + Marketing Expertise side by side in one row
+   (2026-10-17, revised again) - Ask Me About is a separate full-width
+   row below (see .profile-section-divider), not a 3rd column here, and
+   the gap between the two columns is plain spacing now, no vertical
+   divider - "subtle horizontal separators rather than tall vertical
+   dividers", per request. */
 .alum-columns{
   display: flex;
   flex-direction: row;
   gap: 24px;
   margin-top: 12px;
 }
-.alum-col{ flex: 1 1 140px; min-width: 0; }
-/* Industry Expertise's primary value - plain text, not a pill (that's
-   what distinguishes it from Marketing Expertise/Ask me about). Not
-   bold, per request. */
-.alum-col-value{
-  font-family: 'Inter', sans-serif;
-  font-size: 14px;
-  font-weight: 400;
-  color: var(--ink);
-  line-height: 1.4;
+/* padding-top gives the column text its own breathing room below the
+   (flush) horizontal divider above it. */
+.alum-col{ flex: 1 1 140px; min-width: 0; padding-top: 14px; }
+/* Subtle (1px, not the site's usual 2px dividers - deliberately lighter
+   here per request) separator between the expertise row above and Ask
+   Me About below. Same edge-to-edge trick and reasoning as
+   .profile-divider just above - cancels .directory-right's own 28px
+   padding on both sides. */
+.profile-section-divider{
+  border-top: 1px solid var(--line);
+  margin: 16px -28px 16px -28px;
 }
 /* "+N more" for an alum's other selected industries beyond the primary
    one shown - opens a small popover (not an inline expand) listing them
@@ -1656,12 +2057,14 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 22px 24px;
-  border-bottom: 1px solid var(--line);
+  /* Tightened to match the nav's own reduced spacing (2026-10-17, per
+     request), was 22px 24px. */
+  padding: 14px 24px;
+  border-bottom: 2px solid var(--line);
   flex-shrink: 0;
 }
 .pins-drawer-header h2{
-  font-family: 'Baskerville', 'Libre Baskerville', serif;
+  font-family: 'Libre Baskerville', serif;
   font-weight: 500;
   font-size: 21px;
   margin: 0;
@@ -1685,7 +2088,7 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 .pins-drawer-footer{
   flex-shrink: 0;
   padding: 18px 24px;
-  border-top: 1px solid var(--line);
+  border-top: 2px solid var(--line);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1743,6 +2146,19 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
 }
 .sort-option:hover{ background: var(--paper); }
 .sort-option.active{ color: var(--accent); font-weight: 600; }
+/* Clears sortMode back to unsorted (natural list order), same idea as
+   the filters' own "Clear all" - styled the same way (purple, bold, no
+   background) and set off from the real sort choices below it with a
+   thin divider, per request. */
+.sort-option.sort-clear{
+  color: var(--accent);
+  font-weight: 700;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  margin-bottom: 4px;
+  padding-bottom: 10px;
+}
+.sort-option.sort-clear:hover{ background: none; color: var(--accent-deep); }
 
 .toast{
   position: fixed;
@@ -1953,13 +2369,32 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   </div>
 </div>
 
+<!-- Embeds the Google Form in-site (2026-10-19, per request) - submitting
+     used to open the form in a new tab, meaning students left the site
+     entirely to finish signing up. The form's own "embedded=true" mode
+     (same prefill query params as before, just with that one added) is
+     built for exactly this: it renders inside this iframe, including
+     Google's own post-submission confirmation screen once they submit,
+     so the whole flow - and the "thanks" message - stays on this page,
+     never navigating the parent window away. -->
+<div id="view-claim-form" style="display:none">
+  <div class="claim-form-intro">
+    <p>Fill out the form below to submit your picks - you'll see a confirmation message right here once it's been recorded.</p>
+  </div>
+  <div class="claim-form-frame-wrap">
+    <iframe id="claimFormFrame" class="claim-form-frame" title="Alumni coffee chat sign-up form" src="" loading="lazy">Loading…</iframe>
+  </div>
+</div>
+
 <div id="view-listing" style="display:none">
 
-<!-- Shared toolbar (2026-10-17 redesign): search + all 5 filters +
-     Review & Submit now span the full page width, above both panels,
-     instead of living inside the left panel with Review & Submit as a
-     separate rotated edge tab. -->
+<!-- Shared toolbar (2026-10-17 redesign; revised again 2026-10-17 to
+     span the full viewport width with its own white background and
+     divider, while the actual search/filter/button content stays
+     nested in a .listing-container so it keeps its 1280px-centered
+     position - see that class's own comment). -->
 <div class="directory-toolbar">
+<div class="listing-container">
   <div class="search-box">
     <button class="search-btn" id="searchBtn" aria-label="Search">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -1969,15 +2404,6 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   <div class="toolbar-row2">
     <div class="filter-bar">
       <div class="filter-dropdowns" id="filterPanel"></div>
-      <div class="filter-dropdown sort-dropdown" id="sortDropdown">
-        <button type="button" class="filter-dropdown-toggle" id="sortToggle" aria-haspopup="true" aria-expanded="false">
-          Sort<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-        </button>
-        <div class="filter-dropdown-panel sort-panel" id="sortPanel">
-          <button type="button" class="sort-option" data-sort="recent">Recently added</button>
-          <button type="button" class="sort-option" data-sort="capacity">Spots available</button>
-        </div>
-      </div>
       <button class="clear-btn" id="clearFiltersBtn">Clear all</button>
     </div>
     <button class="pins-toggle-btn" id="pinsToggleBtn">
@@ -1985,6 +2411,15 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
     </button>
   </div>
 </div>
+</div><!-- /directory-toolbar -->
+
+<!-- Shared max-width container (2026-10-17, per request) - caps the
+     split-view (directory + profile) at 1280px, centered, with
+     responsive side margins, instead of spanning the raw viewport
+     edge-to-edge. Individual pieces below no longer carry their own 6vw
+     inset - this one padding value is now the only horizontal margin in
+     play. -->
+<div class="listing-container">
 <div id="statusArea"></div>
 
 <!-- Split-view directory: left panel is the scrollable alumni list;
@@ -2000,19 +2435,31 @@ header.site h1 em{ font-style: italic; color: var(--accent); }
   <div class="directory-left" id="directoryLeft">
     <div class="directory-list-header">
       <span id="directoryCount"></span>
+      <div class="filter-dropdown sort-dropdown" id="sortDropdown">
+        <button type="button" class="sort-label-btn" id="sortToggle" aria-haspopup="true" aria-expanded="false">
+          <span id="sortToggleLabel">Sort</span>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="filter-dropdown-panel sort-panel" id="sortPanel">
+          <button type="button" class="sort-option sort-clear" data-sort="none">Clear</button>
+          <button type="button" class="sort-option" data-sort="capacity">Most spots available</button>
+          <button type="button" class="sort-option" data-sort="capacity_asc">Least spots available</button>
+          <button type="button" class="sort-option" data-sort="newest">Newest</button>
+          <button type="button" class="sort-option" data-sort="oldest">Oldest</button>
+        </div>
+      </div>
     </div>
     <div class="directory-list" id="directoryList"></div>
   </div>
   <div class="directory-resizer" id="directoryResizer" role="separator" aria-orientation="vertical" aria-label="Resize directory and profile panels" tabindex="0">
     <button type="button" class="directory-resizer-collapse" id="directoryCollapseBtn" aria-label="Collapse profile panel">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 6 9 12 15 18"/></svg>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>
     </button>
   </div>
   <div class="directory-right" id="directoryRight"></div>
-  <button class="directory-reopen-btn" id="directoryReopenBtn" aria-label="Show profile panel" style="display:none">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>
-  </button>
 </div>
+
+</div><!-- /listing-container -->
 
 </div><!-- /view-listing -->
 
@@ -2549,17 +2996,19 @@ function normalizeCityValue(raw){
   return [trimmed];
 }
 
-// Buckets every normalized city/location value under one of three
+// Buckets every normalized city/location value under one of four
 // top-level Location filter options, per request. Classification is by
-// the trailing ", Country" normalizeCityValue leaves on non-US values
-// (ASIA_COUNTRIES / LATAM_COUNTRIES below), plus a short override list
-// for well-known non-US cities that are sometimes written bare (no
-// country suffix). Anything that doesn't match either - including a
-// bare US city (no comma) and any other country not called out below,
-// e.g. Canada/UK/Europe - defaults to "United States", since that's
-// this list's effective catch-all bucket, not a claim those places are
-// in the US. Revisit this default if alumni outside those three
-// regions become common enough to warrant a 4th option.
+// the trailing ", Country" normalizeCityValue leaves on non-North-
+// American values (ASIA_COUNTRIES / LATAM_COUNTRIES / EUROPE_COUNTRIES
+// below), plus a short override list for well-known cities that are
+// sometimes written bare (no country suffix). Anything that doesn't
+// match any of those - including a bare US/Canada city (no comma) and
+// any other country not called out below - defaults to "North America",
+// since that's this list's effective catch-all bucket, not a claim
+// those places are in the US specifically (Canada rides this same
+// catch-all, deliberately - see "Toronto, Canada" in the real data).
+// Revisit this default if alumni outside these four regions become
+// common enough to warrant a 5th option.
 const ASIA_COUNTRIES = [
   "china", "japan", "south korea", "korea", "india", "singapore",
   "indonesia", "malaysia", "thailand", "vietnam", "philippines",
@@ -2573,9 +3022,17 @@ const LATAM_COUNTRIES = [
   "costa rica", "panama", "guatemala", "honduras", "el salvador",
   "nicaragua", "dominican republic", "cuba"
 ];
-// Bare (no-comma) city names known to be outside the US - without this,
-// a city like "Singapore" would hit the no-comma fallback and read as
-// a US city.
+const EUROPE_COUNTRIES = [
+  "uk", "united kingdom", "england", "scotland", "wales",
+  "northern ireland", "ireland", "france", "germany", "spain",
+  "italy", "portugal", "netherlands", "belgium", "switzerland",
+  "austria", "sweden", "norway", "denmark", "finland", "poland",
+  "greece", "czech republic", "hungary", "romania", "ukraine",
+  "iceland", "luxembourg", "croatia"
+];
+// Bare (no-comma) city/country names known to be outside North America
+// - without this, a name like "Singapore" or "Chile" would hit the
+// no-comma fallback and read as North American.
 const CITY_REGION_OVERRIDES = {
   "singapore": "Asia", "hong kong": "Asia", "tokyo": "Asia", "seoul": "Asia",
   "mumbai": "Asia", "delhi": "Asia", "bangalore": "Asia", "shanghai": "Asia",
@@ -2583,9 +3040,14 @@ const CITY_REGION_OVERRIDES = {
   "mexico city": "Latin America", "sao paulo": "Latin America",
   "são paulo": "Latin America", "bogota": "Latin America",
   "bogotá": "Latin America", "buenos aires": "Latin America",
-  "santiago": "Latin America", "lima": "Latin America"
+  "santiago": "Latin America", "lima": "Latin America",
+  "chile": "Latin America", "mexico": "Latin America",
+  "brazil": "Latin America", "colombia": "Latin America",
+  "london": "Europe", "paris": "Europe", "berlin": "Europe",
+  "madrid": "Europe", "rome": "Europe", "amsterdam": "Europe",
+  "dublin": "Europe", "uk": "Europe", "united kingdom": "Europe"
 };
-const LOCATION_REGIONS = ["United States", "Asia", "Latin America"];
+const LOCATION_REGIONS = ["North America", "Europe", "Asia", "Latin America"];
 function regionForCity(value){
   const trimmed = (value || "").trim();
   const lower = trimmed.toLowerCase();
@@ -2595,10 +3057,11 @@ function regionForCity(value){
     const country = trimmed.slice(commaIdx + 1).trim().toLowerCase();
     if(ASIA_COUNTRIES.includes(country)) return "Asia";
     if(LATAM_COUNTRIES.includes(country)) return "Latin America";
+    if(EUROPE_COUNTRIES.includes(country)) return "Europe";
     const cityPart = trimmed.slice(0, commaIdx).trim().toLowerCase();
     if(CITY_REGION_OVERRIDES[cityPart]) return CITY_REGION_OVERRIDES[cityPart];
   }
-  return "United States";
+  return "North America";
 }
 
 // A name written into the Form with a parenthetical aside (e.g. a former
@@ -2777,6 +3240,7 @@ function buildFilterCheckboxGroup(key, values, onAnyChange){
       else values.forEach(v => filterState[key].delete(v));
       optionCheckboxes.forEach(cb => cb.checked = selectAllBox.checked);
       resetMastheadToGeneric();
+      pendingShuffle = true;
       renderGrid();
       // Update just this toggle's badge in place, same as an individual
       // checkbox does - a full buildFilterPanel() rebuild would close the
@@ -2800,6 +3264,7 @@ function buildFilterCheckboxGroup(key, values, onAnyChange){
       else filterState[key].delete(val);
       if(selectAllBox) selectAllBox.checked = values.every(v => filterState[key].has(v));
       resetMastheadToGeneric();
+      pendingShuffle = true;
       renderGrid();
       onAnyChange();
     };
@@ -2817,11 +3282,111 @@ function buildFilterCheckboxGroup(key, values, onAnyChange){
   return optionsList;
 }
 
-// Location's own panel: 3 fixed region headers (United States, Asia,
-// Latin America), each a clickable row that reveals its own nested
-// checkbox list only once clicked - the cities/countries inside stay
-// hidden until then, per request. Reuses buildFilterCheckboxGroup for
-// each region's nested list, scoped to just that region's values.
+// North America's own further breakdown (per request) - "East Coast,
+// Midwest, West Coast, South, Canada", nested one level inside the
+// North America region using the exact same accordion pattern (see
+// buildAccordionItem below) rather than a separate UI concept. Mapped
+// by hand against the real city values actually in the data; anything
+// that doesn't match a specific sub-region (e.g. a bare "USA" with no
+// city) falls through and is still shown, just directly in North
+// America's own list rather than nested under one of the five - better
+// than silently dropping it or guessing a region for it.
+const NA_SUBREGIONS = ["East Coast", "Midwest", "West Coast", "South", "Canada"];
+const NA_SUBREGION_BY_CITY = {
+  "boston": "East Coast", "cambridge": "East Coast", "new york": "East Coast",
+  "washington, d.c.": "East Coast", "pittsburgh": "East Coast",
+  "chicago": "Midwest", "minneapolis": "Midwest", "urbana": "Midwest",
+  "deerfield": "Midwest",
+  "los angeles": "West Coast", "bay area": "West Coast",
+  "san francisco bay area": "West Coast", "salt lake city": "West Coast",
+  "denver": "West Coast", "phoenix": "West Coast",
+  "atlanta": "South", "houston": "South", "miami": "South"
+};
+function naSubregionForCity(value){
+  const lower = (value || "").trim().toLowerCase();
+  if(NA_SUBREGION_BY_CITY[lower]) return NA_SUBREGION_BY_CITY[lower];
+  if(lower === "canada" || lower.endsWith(", canada")) return "Canada";
+  return null;
+}
+
+// Generic single accordion row (a clickable header + a panel that's
+// hidden until clicked), shared by both the top-level region list and
+// North America's own nested sub-region list below - closeSiblingsIn is
+// whichever element directly contains this row's siblings, so each
+// level's accordion only ever closes items at its OWN level, never
+// reaching into a different level's already-open state.
+function buildAccordionItem(label, activeCount, panelEl, closeSiblingsIn){
+  const itemWrap = document.createElement('div');
+  itemWrap.className = 'location-region';
+  const toggle = document.createElement('button');
+  toggle.type = 'button';
+  toggle.className = 'location-region-toggle';
+  toggle.innerHTML = `<span>${label}</span>${activeCount ? `<span class="filter-dropdown-count">(${activeCount})</span>` : ''}<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`;
+  toggle.classList.toggle('has-selection', activeCount > 0);
+  toggle.addEventListener('click', () => {
+    const willOpen = !itemWrap.classList.contains('open');
+    closeSiblingsIn.querySelectorAll('.location-region.open').forEach(el => el.classList.remove('open'));
+    itemWrap.classList.toggle('open', willOpen);
+  });
+  itemWrap.appendChild(toggle);
+  itemWrap.appendChild(panelEl);
+  return itemWrap;
+}
+
+// North America's panel: instead of one flat checkbox list, a second
+// level of the same accordion holding its 5 sub-regions, plus (per
+// request, see naSubregionForCity above) a trailing plain checkbox list
+// for anything that didn't map to one of those 5.
+function buildNorthAmericaPanel(values, onAnyChange){
+  const wrap = document.createElement('div');
+  wrap.className = 'location-regions location-subregions';
+
+  const bySubregion = {};
+  NA_SUBREGIONS.forEach(s => bySubregion[s] = []);
+  const unmatched = [];
+  values.forEach(v => {
+    const sub = naSubregionForCity(v);
+    if(sub) bySubregion[sub].push(v);
+    else unmatched.push(v);
+  });
+
+  NA_SUBREGIONS.forEach(sub => {
+    const subValues = bySubregion[sub];
+    const subActiveCount = subValues.filter(v => filterState.city.has(v)).length;
+    const subPanel = document.createElement('div');
+    subPanel.className = 'location-region-panel';
+    let subToggleEl;
+    if(subValues.length === 0){
+      const empty = document.createElement('div');
+      empty.className = 'location-region-empty';
+      empty.textContent = 'No alumni listed here yet.';
+      subPanel.appendChild(empty);
+    } else {
+      subPanel.appendChild(buildFilterCheckboxGroup('city', subValues, () => {
+        updateDropdownCountBadge(subToggleEl, subValues.filter(v => filterState.city.has(v)).length);
+        onAnyChange();
+      }));
+    }
+    const subItem = buildAccordionItem(sub, subActiveCount, subPanel, wrap);
+    subToggleEl = subItem.querySelector('.location-region-toggle');
+    wrap.appendChild(subItem);
+  });
+
+  if(unmatched.length){
+    wrap.appendChild(buildFilterCheckboxGroup('city', unmatched, onAnyChange));
+  }
+
+  return wrap;
+}
+
+// Location's own panel: 4 fixed region headers (North America, Europe,
+// Asia, Latin America), each a clickable row that reveals its own
+// nested list only once clicked - the cities/countries inside stay
+// hidden until then, per request. North America's own list is a further
+// nested accordion (see buildNorthAmericaPanel above); the other three
+// stay a flat checkbox list via buildFilterCheckboxGroup. Accordion
+// behavior (per request) - opening one closes any other region already
+// open, rather than letting several stack up at once.
 function buildLocationRegionGroup(values, onAnyChange){
   const wrap = document.createElement('div');
   wrap.className = 'location-regions';
@@ -2829,43 +3394,37 @@ function buildLocationRegionGroup(values, onAnyChange){
   const byRegion = {};
   LOCATION_REGIONS.forEach(r => byRegion[r] = []);
   values.forEach(v => {
-    const region = LOCATION_REGIONS.includes(regionForCity(v)) ? regionForCity(v) : "United States";
+    const region = LOCATION_REGIONS.includes(regionForCity(v)) ? regionForCity(v) : "North America";
     byRegion[region].push(v);
   });
 
   LOCATION_REGIONS.forEach(region => {
     const regionValues = byRegion[region];
-    const regionWrap = document.createElement('div');
-    regionWrap.className = 'location-region';
-
-    const regionToggle = document.createElement('button');
-    regionToggle.type = 'button';
-    regionToggle.className = 'location-region-toggle';
     const regionActiveCount = regionValues.filter(v => filterState.city.has(v)).length;
-    regionToggle.innerHTML = `<span>${region}</span>${regionActiveCount ? `<span class="filter-dropdown-count">(${regionActiveCount})</span>` : ''}<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`;
-    regionToggle.classList.toggle('has-selection', regionActiveCount > 0);
 
     const regionPanel = document.createElement('div');
     regionPanel.className = 'location-region-panel';
+    let regionToggleEl;
     if(regionValues.length === 0){
       const empty = document.createElement('div');
       empty.className = 'location-region-empty';
       empty.textContent = 'No alumni listed here yet.';
       regionPanel.appendChild(empty);
+    } else if(region === "North America"){
+      regionPanel.appendChild(buildNorthAmericaPanel(regionValues, () => {
+        updateDropdownCountBadge(regionToggleEl, regionValues.filter(v => filterState.city.has(v)).length);
+        onAnyChange();
+      }));
     } else {
       regionPanel.appendChild(buildFilterCheckboxGroup('city', regionValues, () => {
-        updateDropdownCountBadge(regionToggle, regionValues.filter(v => filterState.city.has(v)).length);
+        updateDropdownCountBadge(regionToggleEl, regionValues.filter(v => filterState.city.has(v)).length);
         onAnyChange();
       }));
     }
 
-    regionToggle.addEventListener('click', () => {
-      regionWrap.classList.toggle('open');
-    });
-
-    regionWrap.appendChild(regionToggle);
-    regionWrap.appendChild(regionPanel);
-    wrap.appendChild(regionWrap);
+    const regionItem = buildAccordionItem(region, regionActiveCount, regionPanel, wrap);
+    regionToggleEl = regionItem.querySelector('.location-region-toggle');
+    wrap.appendChild(regionItem);
   });
 
   return wrap;
@@ -3031,6 +3590,47 @@ function formatIconHtml(value){
 // City (plain text) + meeting format (each value paired with its icon) -
 // built as HTML directly (rather than through joinValues, which only
 // handles plain text) since format needs an icon alongside its label.
+// Two general display rules (2026-10-17, per request), applied wherever
+// alum-authored free text gets rendered: "and" always reads as "&", and
+// "previously" always reads as "prev" - several respondents already
+// write "prev." themselves (e.g. "prev. Spine AI..."), so this just
+// makes anyone who spelled it out match that same shorthand. Case of
+// the replacement follows the source word's own first letter, so a
+// sentence-leading "Previously" still reads as a sentence-leading
+// "Prev" rather than jarringly lowercase.
+function applyTextRules(str){
+  if(!str) return str;
+  return str
+    .replace(/\bprevious(ly)?\b/gi, (m) => m[0] === m[0].toUpperCase() ? 'Prev' : 'prev')
+    .replace(/\band\b/gi, '&');
+}
+
+// Splits off a trailing parenthetical, or (failing that) a comma-
+// separated segment that itself starts with a "previously worked
+// there" marker (ex-, prev., previously, formerly) - e.g. "Dyson,
+// ex-Ulta Beauty" or "Morning Brew Inc. (prev. Orchestra...)". Ordinary
+// commas that are just part of the title/company itself (e.g. "Senior
+// Director, Product Experience Design") are left alone, since nothing
+// after them matches a previous-work marker. Used to put that extra
+// detail on its own, smaller line rather than running it into the main
+// text - per request.
+const PREV_NOTE_MARKER_RE = /^(ex-|ex\s|prev\.?\b|previously\b|formerly\b)/i;
+function splitPrevNote(str){
+  if(!str) return {main: str, note: ''};
+  const parenMatch = /^(.*?)\s*(\([^()]*\))\s*$/.exec(str);
+  if(parenMatch && parenMatch[1]){
+    return {main: parenMatch[1], note: parenMatch[2]};
+  }
+  const parts = str.split(/,\s*/);
+  if(parts.length > 1){
+    const idx = parts.findIndex((p, i) => i > 0 && PREV_NOTE_MARKER_RE.test(p));
+    if(idx !== -1){
+      return {main: parts.slice(0, idx).join(', '), note: parts.slice(idx).join(', ')};
+    }
+  }
+  return {main: str, note: ''};
+}
+
 // Normalizes a role/title string to mixed case for display, regardless of
 // how the alum typed it in the Form (ALL CAPS, all lowercase, etc.) -
 // applied only here at render time, never to the stored a.role value.
@@ -3040,7 +3640,7 @@ function formatIconHtml(value){
 // fine.
 const ROLE_MINOR_WORDS = new Set(['and','or','the','of','for','in','on','at','to','a','an','with']);
 const ROLE_LOWER_ACRONYMS = new Set(['ai','gtm','vp','svp','evp','pr','hr','ux','ui','ceo','cfo','coo','cmo','cto','seo','sem','crm','roi','kpi','pm']);
-function titleCaseRole(str){
+function titleCaseWords(str){
   let wordIndex = 0;
   return str.replace(/[A-Za-z']+/g, (word) => {
     const isFirst = wordIndex === 0;
@@ -3057,6 +3657,15 @@ function titleCaseRole(str){
     if(!isFirst && ROLE_MINOR_WORDS.has(lower)) return lower;
     return word.charAt(0).toUpperCase() + word.slice(1);
   });
+}
+// Role display - mixed-cases the main title, splits a "previously held
+// this role" note onto its own smaller line, and applies the and->& /
+// previously->prev rules to both.
+function titleCaseRole(role){
+  const {main, note} = splitPrevNote(role);
+  const mainHtml = applyTextRules(titleCaseWords(main));
+  if(!note) return mainHtml;
+  return `${mainHtml}<span class="alum-role-note">${applyTextRules(note)}</span>`;
 }
 
 function cardContactLineHtml(a){
@@ -3120,38 +3729,47 @@ function primaryIndustryOrderedList(a){
 // columns, per request - previously Marketing Expertise was its own full-
 // width line below this one. Each column is independent: either can be
 // empty without breaking the row's layout.
-function cardIndustryExpertiseColumnsHtml(a){
-  // Industry Expertise is plain text again (2026-10-15) - not pills like
-  // Marketing/Ask me about. Only the primary industry is shown as text;
-  // anything beyond it folds into a "+N more" pill (the only pill this
-  // column has) that opens a popover, same interaction as the filter
-  // dropdowns - this is a flat "show 1, count the rest" rule rather than
-  // the measured 1-line-collapse the pill rows use, since there's no
-  // per-item element here to measure against the column width.
-  const [primaryIndustry, ...otherIndustries] = primaryIndustryOrderedList(a);
-  let industryColHtml = '';
-  if(primaryIndustry){
-    let industryValueHtml = `<div class="topic-tags"><span class="topic-tag">${primaryIndustry}</span>`;
-    if(otherIndustries.length){
-      industryValueHtml += `<span class="industry-more-wrap">
-        <button type="button" class="industry-more-btn" aria-expanded="false">+${otherIndustries.length} more</button>
-        <div class="industry-more-popover">
-          <div class="industry-more-popover-title">This alum has also worked in:</div>
-          <div class="industry-more-popover-list">${otherIndustries.map(v => `<div>${v}</div>`).join('')}</div>
-        </div>
-      </span>`;
-    }
-    industryValueHtml += `</div>`;
-    industryColHtml = `<div class="alum-col"><span class="field-label">Industry Expertise</span><div class="alum-col-value">${industryValueHtml}</div></div>`;
+// Industry Expertise, Marketing Expertise and Ask Me About as one
+// horizontal row of up to 3 columns with a vertical divider between
+// each PRESENT one (2026-10-17 - Ask Me About used to be its own block
+// stacked below the other two) - built as an array and joined so a
+// missing column (e.g. no marketing areas selected) never leaves a
+// stray divider floating next to nothing.
+// Industry/Marketing Expertise sit side by side in one row; Ask Me
+// About is its own full-width row below, separated by a subtle
+// horizontal line rather than the vertical dividers this used to use
+// between all 3 columns (2026-10-17, per request).
+function profileThreeColumnsHtml(a, visibleTopics){
+  const cols = [];
+
+  // Industry Expertise - pills, all of them (2026-10-17, per request;
+  // used to show only the primary one as plain text with a flat "+N
+  // more" for the rest). Same measured 1-line-collapse the Marketing/
+  // Ask Me About pill rows already use - see collapsePillRowOverflow,
+  // wired up for this row too in collapseAskMeAboutOverflow() - rather
+  // than a fixed "show 1" rule, so it only folds into "+N more" once the
+  // pills actually don't fit.
+  const allIndustries = primaryIndustryOrderedList(a);
+  if(allIndustries.length){
+    cols.push(`<div class="alum-col"><span class="field-label">Industry Expertise</span><div class="topic-tags industry-tags">${allIndustries.map(v => `<span class="topic-tag">${applyTextRules(v)}</span>`).join('')}</div></div>`);
   }
 
   const marketingParts = cardMarketingLineValues(a);
-  const marketingColHtml = marketingParts.length
-    ? `<div class="alum-col"><span class="field-label">Marketing Expertise</span><div class="topic-tags marketing-tags">${marketingParts.map(v => `<span class="topic-tag">${v}</span>`).join('')}</div></div>`
+  if(marketingParts.length){
+    cols.push(`<div class="alum-col"><span class="field-label">Marketing Expertise</span><div class="topic-tags marketing-tags">${marketingParts.map(v => `<span class="topic-tag">${applyTextRules(v)}</span>`).join('')}</div></div>`);
+  }
+
+  const askMeAboutHtml = visibleTopics.length
+    ? `<div class="alum-col ask-me-about"><span class="field-label">Ask Me About</span><div class="topic-tags">${visibleTopics.map(t => `<span class="topic-tag">${applyTextRules(topicShortLabel(t))}</span>`).join('')}</div></div>`
     : '';
 
-  if(!industryColHtml && !marketingColHtml) return '';
-  return `<div class="alum-columns">${industryColHtml}${marketingColHtml}</div>`;
+  if(!cols.length && !askMeAboutHtml) return '';
+  let html = cols.length ? `<div class="alum-columns">${cols.join('')}</div>` : '';
+  if(askMeAboutHtml){
+    if(html) html += `<div class="profile-section-divider"></div>`;
+    html += askMeAboutHtml;
+  }
+  return html;
 }
 
 // Marketing expertise - its own labeled line, matching the reference.
@@ -3274,13 +3892,16 @@ function formatDisplayLabel(value){
   return FORMAT_DISPLAY_OVERRIDES[value] || value;
 }
 
-// A trailing parenthetical explainer after the company name (e.g.
-// "Dexmate (Robotics company in SF bay)") renders at the job title's
-// smaller size, so the brand name itself stays the prominent part.
+// A trailing parenthetical explainer, or a comma-separated "previously
+// worked there" aside (e.g. "Dexmate (Robotics company in SF bay)" or
+// "Dyson, ex-Ulta Beauty") - see splitPrevNote - renders on its own
+// line, smaller, so the current company name itself stays the prominent
+// part. and->& / previously->prev applied to both.
 function companyHtml(company){
-  const m = /^(.*?)\s*(\([^()]*\))\s*$/.exec(company || '');
-  if(!m || !m[1]) return company;
-  return `${m[1]} <span class="alum-company-note">${m[2]}</span>`;
+  const {main, note} = splitPrevNote(company || '');
+  const mainHtml = applyTextRules(main);
+  if(!note) return mainHtml;
+  return `${mainHtml}<span class="alum-company-note">${applyTextRules(note)}</span>`;
 }
 
 function capacityBadgeHtml(capacity, assumed){
@@ -3309,24 +3930,71 @@ let selectedAlumId = null;
 
 const PORTRAIT_PLACEHOLDER_SVG = '<svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/></svg>';
 
-// Sort (2026-10-17) - re-orders whatever matchesFilters already narrowed
-// the list down to, so it's always "relevant to whatever filters have
-// been applied" rather than a separate, independent sort over everyone.
-let sortMode = null; // null | 'recent' | 'capacity'
-const SORT_LABELS = {recent: 'Recently added', capacity: 'Spots available'};
-function applySort(list){
-  if(sortMode === 'recent'){
-    return [...list].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+// Real alum photos, from the "IMC Connects Photos" folder (deployed as
+// photos/ alongside the site - see the deploy workflow) - named
+// <slugified full name>.<ext>, e.g. "Aastha Desai" -> photos/
+// aastha_desai.jpg. Coverage is partial and growing as more get added,
+// so this tries every extension actually in use in that folder in turn
+// (via the image's own onerror) and falls back to the placeholder SVG
+// once all of them 404 - never assumes a particular alum has a photo.
+const PORTRAIT_EXTS = ['jpg', 'jpeg', 'png', 'jfif'];
+function slugifyAlumName(name){
+  return (name || '')
+    .normalize('NFD').replace(/[̀-ͯ]/g, '') // strip accents
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+}
+function portraitImgHtml(alum){
+  const slug = slugifyAlumName(alum.name);
+  if(!slug) return '';
+  return `<img class="profile-portrait-img" alt="" data-slug="${slug}" data-ext-idx="0" src="photos/${slug}.${PORTRAIT_EXTS[0]}" onerror="handlePortraitImgError(this)">`;
+}
+function handlePortraitImgError(img){
+  const nextIdx = parseInt(img.dataset.extIdx, 10) + 1;
+  if(nextIdx < PORTRAIT_EXTS.length){
+    img.dataset.extIdx = nextIdx;
+    img.src = `photos/${img.dataset.slug}.${PORTRAIT_EXTS[nextIdx]}`;
+  } else {
+    img.style.display = 'none';
+    const fallback = img.parentElement.querySelector('.profile-portrait-fallback');
+    if(fallback) fallback.style.display = 'flex';
   }
+}
+
+// Sort (2026-10-17, revised again) - re-orders whatever matchesFilters
+// already narrowed the list down to, so it's always "relevant to
+// whatever filters have been applied" rather than a separate,
+// independent sort over everyone. Always has an active mode now (no
+// more "off" state) - Name A-Z is the default, per request.
+let sortMode = 'none'; // 'none' | 'capacity' | 'capacity_asc' | 'newest' | 'oldest'
+const SORT_LABELS = {
+  none: 'Sort',
+  capacity: 'Most spots available',
+  capacity_asc: 'Least spots available',
+  newest: 'Newest',
+  oldest: 'Oldest'
+};
+function applySort(list){
   if(sortMode === 'capacity'){
     return [...list].sort((a, b) => (b.capacity || 0) - (a.capacity || 0));
   }
-  return list;
+  if(sortMode === 'capacity_asc'){
+    return [...list].sort((a, b) => (a.capacity || 0) - (b.capacity || 0));
+  }
+  if(sortMode === 'newest'){
+    return [...list].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  }
+  if(sortMode === 'oldest'){
+    return [...list].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+  }
+  return list; // 'none' - unsorted, natural order
 }
 
 function renderGrid(){
   const filtered = applySort(alumni.filter(matchesFilters));
   renderDirectoryList(filtered);
+  updateClearButtonVisibility();
 
   if(filtered.length === 0){
     selectedAlumId = null;
@@ -3339,6 +4007,24 @@ function renderGrid(){
   renderProfilePanel();
 }
 
+// Set to true right before a renderGrid() call that's specifically a
+// filter or sort change (never on plain search-as-you-type or a row
+// selection) - renderDirectoryList reads it once, plays the shuffle-in
+// animation on every card, and clears it back to false so the next
+// unrelated render is plain.
+let pendingShuffle = false;
+
+// Shows "Clear all" only once a filter is actually active (per the
+// responsive-hierarchy spec, 2026-10-20) - an always-visible clear
+// button reads as clutter when there's nothing to clear. Search text
+// doesn't count; this tracks the filter pills specifically.
+function updateClearButtonVisibility(){
+  const btn = document.getElementById('clearFiltersBtn');
+  if(!btn) return;
+  const hasActiveFilter = FILTERABLE.some(key => filterState[key] && filterState[key].size > 0);
+  btn.style.display = hasActiveFilter ? '' : 'none';
+}
+
 // The left-hand list - name/role/company/location/availability only,
 // no pin button (that lives solely on the profile panel now) and no
 // photo (portraits are profile-panel-only, per request). Natural text
@@ -3346,17 +4032,23 @@ function renderGrid(){
 function renderDirectoryList(filtered){
   const list = document.getElementById('directoryList');
   const countEl = document.getElementById('directoryCount');
-  if(countEl) countEl.textContent = `${filtered.length} alumni`;
+  if(countEl) countEl.textContent = `${filtered.length} alumni available`;
+  const shuffle = pendingShuffle;
+  pendingShuffle = false;
   list.innerHTML = '';
   if(filtered.length === 0){
     list.innerHTML = `<div class="directory-empty">No alumni match those filters right now. Try clearing a few.</div>`;
     return;
   }
-  filtered.forEach(a => {
+  filtered.forEach((a, i) => {
     const contactHtml = cardContactLineHtml(a);
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = 'directory-entry' + (a.id === selectedAlumId ? ' selected' : '');
+    btn.className = 'directory-entry'
+      + (a.id === selectedAlumId ? ' selected' : '')
+      + (cart.includes(a.id) ? ' in-list' : '')
+      + (shuffle ? ' shuffle-in' : '');
+    if(shuffle) btn.style.animationDelay = Math.min(i * 16, 400) + 'ms';
     btn.dataset.id = a.id;
     btn.setAttribute('aria-pressed', String(a.id === selectedAlumId));
     btn.innerHTML = `
@@ -3364,28 +4056,44 @@ function renderDirectoryList(filtered){
         <div class="directory-entry-name">${a.name}</div>
         ${a.role ? `<div class="alum-role">${titleCaseRole(a.role)}</div>` : ''}
         <div class="alum-company">${companyHtml(a.company)}</div>
-        ${contactHtml ? `<div class="directory-entry-location">${contactHtml}</div>` : ''}
       </div>
+      ${contactHtml ? `<div class="directory-entry-location-inline">${contactHtml}</div>` : '<div></div>'}
       <div class="directory-entry-right">
-        ${capacityBadgeHtml(a.capacity, a.capacityAssumed)}
+        <div class="directory-entry-spots">${capacityBadgeHtml(a.capacity, a.capacityAssumed)}</div>
         <svg class="directory-entry-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
       </div>
     `;
     btn.addEventListener('click', () => selectAlum(a.id, {openMobileDetail: true, reopenProfile: true}));
     list.appendChild(btn);
   });
+  enforceDirectoryListMinWidth();
 }
 
-// Up/Down arrow-key navigation across the list rows (2026-10-17) - moves
-// focus to the next/previous row and selects it, same as arrowing
-// through a native listbox. Delegated once on the list container (whose
-// own node survives every render, even though its rows are rebuilt each
-// time) rather than bound per-row.
-document.getElementById('directoryList').addEventListener('keydown', (e) => {
+// Up/Down arrow-key navigation across the list rows - moves focus to
+// the next/previous row and selects it, same as arrowing through a
+// native listbox. Works from the moment the directory is on screen
+// (2026-10-19, per request), not just once a row already has focus -
+// delegated on `document` rather than #directoryList so it still fires
+// when focus is somewhere else entirely (or nowhere - the body) and
+// falls back to whichever alum is already selected (the default first
+// one, on a fresh landing) as the starting point instead of requiring
+// a prior click. Still backs off while someone's actually typing/
+// interacting with an input, a dropdown, or the pins drawer, so it
+// never hijacks arrow keys from those.
+document.addEventListener('keydown', (e) => {
   if(e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+  if(currentView !== 'listing') return;
+  const active = document.activeElement;
+  const typingEl = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT' || active.isContentEditable);
+  if(typingEl) return;
+  if(active && active.closest('.filter-dropdown, .pins-drawer, .resubmit-modal')) return;
   const entries = [...document.querySelectorAll('.directory-entry')];
-  const currentIndex = entries.indexOf(document.activeElement);
-  if(currentIndex === -1) return;
+  if(!entries.length) return;
+  let currentIndex = entries.indexOf(active);
+  if(currentIndex === -1){
+    currentIndex = entries.findIndex(el => Number(el.dataset.id) === selectedAlumId);
+  }
+  if(currentIndex === -1) currentIndex = -1; // ArrowDown from here lands on index 0
   e.preventDefault();
   const nextIndex = e.key === 'ArrowDown'
     ? Math.min(currentIndex + 1, entries.length - 1)
@@ -3405,13 +4113,20 @@ document.getElementById('directoryList').addEventListener('keydown', (e) => {
 // panel is collapsed reopens it, per request.
 function selectAlum(id, opts){
   opts = opts || {};
+  const alreadySelected = selectedAlumId === id;
   selectedAlumId = id;
   document.querySelectorAll('.directory-entry').forEach(el => {
     const isSelected = Number(el.dataset.id) === id;
     el.classList.toggle('selected', isSelected);
     el.setAttribute('aria-pressed', String(isSelected));
   });
-  renderProfilePanel();
+  // Re-clicking whoever's already selected still needs to handle
+  // opening (openMobileDetail/reopenProfile below), but must NOT rebuild
+  // the profile panel's innerHTML - that recreates the <img> from
+  // scratch, which briefly flashes/reloads the photo even though it's
+  // the exact same one already showing (per request - "set it to remain
+  // static").
+  if(!alreadySelected) renderProfilePanel();
   if(opts.openMobileDetail){
     document.getElementById('directorySplit').classList.add('mobile-detail-open');
     document.getElementById('directoryRight').scrollTop = 0;
@@ -3429,11 +4144,10 @@ function closeMobileDetail(){
 // once the panel reopens, per request.
 function collapseProfilePanel(){
   document.getElementById('directorySplit').classList.add('profile-collapsed');
-  document.getElementById('directoryReopenBtn').style.display = 'flex';
 }
 function expandProfilePanel(){
   document.getElementById('directorySplit').classList.remove('profile-collapsed');
-  document.getElementById('directoryReopenBtn').style.display = 'none';
+  enforceDirectoryListMinWidth();
 }
 
 function renderProfilePanel(){
@@ -3457,25 +4171,30 @@ function renderProfilePanel(){
   right.innerHTML = `
     <div class="profile-toolbar">
       <button type="button" class="profile-back-btn" id="profileBackBtn">← Back to directory</button>
-      <div class="profile-availability">
-        <button class="add-btn profile-add-btn ${inCart ? 'added' : ''}" data-id="${a.id}" aria-pressed="${inCart}" aria-label="${inCart ? `Remove ${a.name} from my list` : `Add ${a.name} to my list`}">
-          ${inCart ? CHECK_ICON_SVG : PLUS_ICON_SVG}<span>${inCart ? 'Added to my list' : 'Add to my list'}</span>
-        </button>
-      </div>
     </div>
     <div class="profile-header">
-      <div class="profile-portrait" aria-hidden="true">${PORTRAIT_PLACEHOLDER_SVG}</div>
+      <div class="profile-portrait" aria-hidden="true">
+        ${portraitImgHtml(a)}
+        <span class="profile-portrait-fallback">${PORTRAIT_PLACEHOLDER_SVG}</span>
+      </div>
       <div class="profile-info">
-        <div class="profile-name">${a.name}</div>
-        ${a.role ? `<div class="alum-role">${titleCaseRole(a.role)}</div>` : ''}
-        <div class="alum-company">${companyHtml(a.company)}</div>
+        <div class="profile-availability">
+          ${capacityBadgeHtml(a.capacity, a.capacityAssumed)}
+          <button class="add-btn profile-add-btn ${inCart ? 'added' : ''}" data-id="${a.id}" aria-pressed="${inCart}" aria-label="${inCart ? `Remove ${a.name} from my list` : `Add ${a.name} to my list`}">
+            ${inCart ? CHECK_ICON_SVG : PLUS_ICON_SVG}<span>${inCart ? 'Added to my list' : 'Add to my list'}</span>
+          </button>
+        </div>
+        <div class="profile-info-identity">
+          <div class="profile-name">${a.name}</div>
+          ${a.role ? `<div class="alum-role">${titleCaseRole(a.role)}</div>` : ''}
+          <div class="alum-company">${companyHtml(a.company)}</div>
+        </div>
         ${(contactHtml || linkedinHtml) ? `<div class="alum-meta">${contactHtml}${contactHtml && linkedinHtml ? '<span class="sep"></span>' : ''}${linkedinHtml}</div>` : ''}
       </div>
     </div>
     <div class="profile-divider"></div>
     <div class="profile-sections">
-      ${cardIndustryExpertiseColumnsHtml(a)}
-      ${visibleTopics.length ? `<div class="ask-me-about"><span class="field-label">Ask Me About</span><div class="topic-tags">${visibleTopics.map(t => `<span class="topic-tag">${topicShortLabel(t)}</span>`).join('')}</div></div>` : ''}
+      ${profileThreeColumnsHtml(a, visibleTopics)}
     </div>
   `;
 
@@ -3494,6 +4213,22 @@ function renderProfilePanel(){
   });
 
   collapseAskMeAboutOverflow();
+  alignReviewSubmitButton();
+}
+
+// Review & Submit's right edge matches the sort button's right edge
+// (per request) - both measured live rather than assumed, since the
+// sort button's own position depends on #directoryLeft's width, which
+// varies (the 32/68 drag ratio, or full-width when the profile panel is
+// collapsed). Implemented as a margin-right on the button itself so
+// .filter-bar (its flex sibling) still gets whatever space is left.
+function alignReviewSubmitButton(){
+  const sortBtn = document.querySelector('.sort-label-btn');
+  const reviewBtn = document.getElementById('pinsToggleBtn');
+  if(!sortBtn || !reviewBtn) return;
+  reviewBtn.style.marginRight = '0px';
+  const diff = reviewBtn.getBoundingClientRect().right - sortBtn.getBoundingClientRect().right;
+  reviewBtn.style.marginRight = diff + 'px';
 }
 
 // Delegated rather than bound per-render (renderProfilePanel replaces
@@ -3504,7 +4239,6 @@ document.getElementById('directoryRight').addEventListener('click', (e) => {
   const addBtn = e.target.closest('.profile-add-btn');
   if(addBtn) toggleCart(parseInt(addBtn.dataset.id, 10));
 });
-document.getElementById('directoryReopenBtn').addEventListener('click', expandProfilePanel);
 // The divider's own chevron is the collapse control (2026-10-17, was a
 // separate X button on the profile panel) - stopPropagation on
 // pointerdown keeps a click here from also being read as a drag-start by
@@ -3574,12 +4308,56 @@ function collapsePillRowOverflow(containerSelector, popoverTitle){
 function collapseAskMeAboutOverflow(){
   collapsePillRowOverflow('.ask-me-about .topic-tags', 'Also ask about:');
   collapsePillRowOverflow('.marketing-tags', 'Also has expertise in:');
+  collapsePillRowOverflow('.industry-tags', 'Also worked in:');
 }
 let askMeAboutResizeTimer;
 window.addEventListener('resize', () => {
   clearTimeout(askMeAboutResizeTimer);
   askMeAboutResizeTimer = setTimeout(collapseAskMeAboutOverflow, 150);
 });
+
+// Keeps the hero headline at its tuned position, but never lets it
+// climb higher than a safe distance below the nav row's own real
+// rendered bottom edge. A flat CSS percentage alone (what this used to
+// be) pushes the text further up the *shorter* the viewport gets, since
+// the nav itself barely shrinks (its own top/padding are clamp()-
+// capped) - on a short enough window that collided with, or even sat
+// above, the nav and its divider line. Computed here instead, measured
+// against the nav's actual position, same "measure, don't guess"
+// approach as sizeTowerDecor below. Skipped under 768px, where
+// .hero-copy goes back to being laid out in normal flow (see the
+// max-width:767px block) and this inline override would only fight it.
+//
+// 33.5% of the hero section's height was originally hand-tuned so
+// "Northwestern" (the headline's 2nd line) lined up with the tower
+// illustration's tip. Per a later request (2026-10-17), the whole block
+// is now shifted one further line-height down from that - so "Build
+// your" (line 1) sits where "Northwestern" used to, and the tower-tip
+// alignment is no longer current. headingLineHeight is measured live
+// (h1's line-height:1, so it's just the h1's own rendered font-size,
+// itself a vw-based clamp) rather than hardcoded, since it scales with
+// viewport width.
+function positionHeroCopy(){
+  const heroCopy = document.querySelector('.hero-copy');
+  const nav = document.querySelector('.hero-nav');
+  const h1 = document.querySelector('.hero-copy h1');
+  if(!heroCopy || !nav || !h1) return;
+  if(window.innerWidth < 768){ heroCopy.style.top = ''; return; }
+  // `top` sets .hero-copy's own anchor point, but translateY(-50%) (see
+  // the CSS) then shifts its actual rendered position up by half of its
+  // OWN height - so the floor has to account for that offset too, not
+  // just compare the nav's bottom edge directly against `top`, or the
+  // clamp silently does nothing (it did, the first time this was
+  // written - the anchor looked clamped correctly, but the rendered
+  // text was still flush against the nav).
+  const minTop = nav.getBoundingClientRect().bottom + 24 + heroCopy.offsetHeight / 2;
+  const headingLineHeight = parseFloat(getComputedStyle(h1).lineHeight) || 0;
+  const preferredTop = window.innerHeight * 0.335 + headingLineHeight;
+  heroCopy.style.top = Math.max(preferredTop, minTop) + 'px';
+}
+positionHeroCopy();
+window.addEventListener('load', positionHeroCopy);
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(positionHeroCopy);
 
 // Sizes the hero tower illustration off the gap between the bottom of
 // the "Find alumni" button and the bottom of the viewport, measured at
@@ -3588,7 +4366,10 @@ window.addEventListener('resize', () => {
 // (aspect ~2.904:1). Doubled per explicit request - overlapping the
 // hero text/button is accepted now, so this no longer subtracts a
 // safety margin or stops at the button's edge, just uses it as a
-// sizing reference and multiplies past it.
+// sizing reference and multiplies past it. Called after
+// positionHeroCopy() everywhere below (load/fonts/resize), since the
+// button it measures lives inside .hero-copy - sizing off a stale
+// pre-reposition button location would be wrong.
 const TOWER_ASPECT = 2303 / 793;
 function sizeTowerDecor(){
   const img = document.querySelector('.hero-tower-decor');
@@ -3603,12 +4384,12 @@ function sizeTowerDecor(){
   img.style.width = width + 'px';
 }
 sizeTowerDecor();
-window.addEventListener('load', sizeTowerDecor);
-if(document.fonts && document.fonts.ready) document.fonts.ready.then(sizeTowerDecor);
+window.addEventListener('load', () => { positionHeroCopy(); sizeTowerDecor(); });
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(() => { positionHeroCopy(); sizeTowerDecor(); });
 let towerResizeTimer;
 window.addEventListener('resize', () => {
   clearTimeout(towerResizeTimer);
-  towerResizeTimer = setTimeout(sizeTowerDecor, 100);
+  towerResizeTimer = setTimeout(() => { positionHeroCopy(); sizeTowerDecor(); }, 100);
 });
 
 // Sizes the split-view directory to exactly fill the viewport below the
@@ -3618,32 +4399,22 @@ window.addEventListener('resize', () => {
 // drift at some viewport width. No-ops below 1024px, where the split
 // view isn't in effect (single-column directory scrolls with the page
 // instead).
+// Desktop's own height comes from pure CSS flex now (body/#view-listing/
+// .directory-split's own flex:1;min-height:0 chain, per request - no
+// more JS-measured inline height). Still needed for the MOBILE full-
+// screen detail view though - that's position:fixed, so it isn't a flex
+// child of anything that would otherwise tell it where the content
+// starts, and has to be told via this custom property instead.
 function sizeDirectorySplit(){
   const split = document.getElementById('directorySplit');
   if(!split) return;
-  // Measured as #directorySplit's own distance from the viewport top,
-  // not summed from the masthead's height - that stayed accurate when
-  // this was the only thing above the split, but the 2026-10-17 shared
-  // toolbar (plus the status/pin-cap banners) now also sits above it,
-  // and summing each piece's height by hand is exactly the kind of
-  // guess that drifts. Measuring the split's own position is correct
-  // regardless of how many pieces are stacked above it. Set as a custom
-  // property (not just an inline height) because the mobile detail view
-  // needs the same number - it's a position:fixed panel anchored with
-  // `top: var(--content-top)`, not a child of a sized .directory-split,
-  // so it has no other way to know where the content starts.
   const contentTop = split.getBoundingClientRect().top;
   document.documentElement.style.setProperty('--content-top', contentTop + 'px');
-  if(window.innerWidth < 1024){
-    split.style.height = '';
-    return;
-  }
-  split.style.height = Math.max(window.innerHeight - contentTop, 300) + 'px';
 }
 let directorySplitResizeTimer;
 window.addEventListener('resize', () => {
   clearTimeout(directorySplitResizeTimer);
-  directorySplitResizeTimer = setTimeout(sizeDirectorySplit, 100);
+  directorySplitResizeTimer = setTimeout(() => { sizeDirectorySplit(); enforceDirectoryListMinWidth(); alignReviewSubmitButton(); }, 100);
 });
 
 // Draggable divider between the directory list and the profile panel
@@ -3655,16 +4426,82 @@ window.addEventListener('resize', () => {
 // events (not mouse/touch separately) so drag works the same on
 // trackpad and touchscreen. Desktop-only in effect - the resizer is
 // display:none below 1024px, see the max-width:1023px block.
+// The widest currently-listed name's rendered width (2026-10-17) - used
+// as an extra resize floor so dragging the divider can never squeeze the
+// left column tight enough to wrap a name onto 2 lines. Measured against
+// whichever names are actually in the current filtered list (not the
+// full dataset), so a narrow filtered-down list isn't held back by some
+// unrelated long name elsewhere.
+function measureTextWidth(text, font){
+  const canvas = measureTextWidth._canvas || (measureTextWidth._canvas = document.createElement('canvas'));
+  const ctx = canvas.getContext('2d');
+  ctx.font = font;
+  return ctx.measureText(text).width;
+}
+function minDirectoryListWidthForNames(){
+  const nameEls = document.querySelectorAll('.directory-entry-name');
+  const entry = document.querySelector('.directory-entry');
+  const list = document.getElementById('directoryList');
+  if(!nameEls.length || !entry) return 0;
+  const font = getComputedStyle(nameEls[0]).font;
+  let widest = 0;
+  nameEls.forEach(el => { widest = Math.max(widest, measureTextWidth(el.textContent, font)); });
+  const entryStyle = getComputedStyle(entry);
+  const listStyle = getComputedStyle(list);
+  // Each card now sits inset within .directory-list's own side padding
+  // (the card redesign, per request) rather than running the full width
+  // of #directoryLeft, so the floor needs that inset added back in too -
+  // otherwise it only guaranteed room for the card itself, not for the
+  // actual #directoryLeft width the resizer/enforce functions clamp.
+  const padding = parseFloat(entryStyle.paddingLeft) + parseFloat(entryStyle.paddingRight)
+    + parseFloat(listStyle.paddingLeft) + parseFloat(listStyle.paddingRight);
+  // 1.08x + 12px safety buffer - canvas measureText() doesn't perfectly
+  // match real DOM text layout (web font metrics can differ slightly
+  // from the canvas's fallback if measured before the font's fully
+  // loaded, plus sub-pixel rounding/kerning), so the raw measurement
+  // alone still wrapped a couple of the longer names by a few pixels.
+  return Math.ceil((widest * 1.08) + padding) + 12;
+}
+// The drag-time floor above only fires mid-drag - it did nothing for
+// the *default* split, which on a long enough name (e.g. "Carmen
+// Gutierrez de la Roza") was still narrow enough to wrap, same bug in a
+// different trigger. Called whenever the column might have just gotten
+// narrower without a drag: after the profile opens, after the list
+// re-renders while the profile's already open (filters/sort can change
+// which names are visible), and on viewport resize. Only ever widens
+// (never fights a width the user deliberately dragged wider), and no-ops
+// entirely while the profile is collapsed, where the list is already
+// full-width.
+// Bugfix: a resize event firing while the browsing page itself isn't the
+// current view (e.g. the landing page is shown, so #view-listing is
+// display:none) used to measure a not-yet-laid-out 0px-wide column as
+// "too narrow" and latch the floor width into #directoryLeft's inline
+// style - inert while collapsed, so it silently overrode the real
+// default the next time a profile was opened. A real rendered width is
+// never 0 (min-width:300px alone prevents that), so treat 0 as "not
+// actually visible yet" and skip.
+function enforceDirectoryListMinWidth(){
+  const split = document.getElementById('directorySplit');
+  const left = document.getElementById('directoryLeft');
+  if(!split || !left || split.classList.contains('profile-collapsed')) return;
+  if(left.getBoundingClientRect().width === 0) return;
+  const floor = minDirectoryListWidthForNames();
+  if(left.getBoundingClientRect().width < floor){
+    left.style.flexBasis = floor + 'px';
+  }
+}
+
 function initDirectoryResizer(){
   const resizer = document.getElementById('directoryResizer');
   const left = document.getElementById('directoryLeft');
   const split = document.getElementById('directorySplit');
   if(!resizer || !left || !split) return;
   let dragging = false;
-  const rightMinWidth = 320; // matches .directory-right's min-width in CSS
+  let nameFloor = 0; // recomputed at the start of each drag, see above
+  const rightMinWidth = 480; // matches .directory-right's min-width in CSS
 
   function setLeftWidth(px){
-    const minWidth = parseFloat(getComputedStyle(left).minWidth) || 280;
+    const minWidth = Math.max(parseFloat(getComputedStyle(left).minWidth) || 300, nameFloor);
     const splitWidth = split.getBoundingClientRect().width;
     const maxWidth = splitWidth - rightMinWidth - 16; // 16 = the resizer's own width
     left.style.flexBasis = Math.max(minWidth, Math.min(px, maxWidth)) + 'px';
@@ -3672,6 +4509,7 @@ function initDirectoryResizer(){
 
   resizer.addEventListener('pointerdown', (e) => {
     dragging = true;
+    nameFloor = minDirectoryListWidthForNames();
     resizer.classList.add('dragging');
     resizer.setPointerCapture(e.pointerId);
     document.body.style.userSelect = 'none';
@@ -3691,16 +4529,19 @@ function initDirectoryResizer(){
 
   // Double-click/double-tap the divider resets the split back to its
   // default widths (clearing the inline flex-basis falls back to
-  // .directory-left's CSS default of 35%), per request.
+  // .directory-left's CSS clamp() default), per request.
   resizer.addEventListener('dblclick', () => {
     left.style.flexBasis = '';
   });
 
   // Arrow-key nudging, matching the resizer's role="separator" semantics.
   resizer.addEventListener('keydown', (e) => {
+    if(e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    nameFloor = minDirectoryListWidthForNames();
     const current = left.getBoundingClientRect().width;
-    if(e.key === 'ArrowLeft'){ setLeftWidth(current - 24); e.preventDefault(); }
-    else if(e.key === 'ArrowRight'){ setLeftWidth(current + 24); e.preventDefault(); }
+    if(e.key === 'ArrowLeft'){ setLeftWidth(current - 24); }
+    else { setLeftWidth(current + 24); }
+    e.preventDefault();
   });
 }
 initDirectoryResizer();
@@ -3716,6 +4557,7 @@ function watchProfilePanelWidth(){
     for(const entry of entries){
       right.classList.toggle('narrow', entry.contentRect.width < 420);
     }
+    alignReviewSubmitButton();
   });
   observer.observe(right);
 }
@@ -3748,17 +4590,24 @@ function showToast(msg, type, alignEl){
 // at add-time; it now only applies to the shortlist, below.
 function toggleCart(id){
   const idx = cart.indexOf(id);
+  let inList;
   if(idx !== -1){
     cart.splice(idx, 1);
     const sIdx = shortlist.indexOf(id);
     if(sIdx !== -1) shortlist.splice(sIdx, 1);
+    inList = false;
   } else {
     cart.push(id);
+    inList = true;
   }
-  // The add/pin button only ever lives on the profile panel now (the
+  // The add/pin button itself only ever lives on the profile panel (the
   // directory list doesn't show one), so toggling it only ever affects
-  // the currently-selected alum - no need to rebuild the whole list
-  // (which would also reset its scroll position) just to pin someone.
+  // the currently-selected alum there - no need to rebuild the whole
+  // list (which would also reset its scroll position) just to pin
+  // someone. Its matching card DOES need updating though, now that
+  // being in the list turns a card green - toggled directly on that one
+  // row rather than a full re-render for the same scroll-position reason.
+  document.querySelector(`.directory-entry[data-id="${id}"]`)?.classList.toggle('in-list', inList);
   renderProfilePanel();
   renderPinsDrawer();
 }
@@ -3834,7 +4683,13 @@ function renderPinCardsInto(containerId, ids, opts){
 function renderPinsDrawer(){
   const isReview = pinsDrawerMode === 'review';
   document.getElementById('pinsDrawerCount').textContent = isReview ? `(${shortlist.length}/${MAX_PICKS})` : `(${cart.length})`;
-  document.getElementById('pinsCount').textContent = cart.length ? ` (${cart.length})` : '';
+  // Toolbar button shows the shortlist count against its real cap
+  // (N/5), not the unlimited add-list size, so students can see at a
+  // glance how close they are to a submittable selection; muted when
+  // empty rather than disabled outright, since the button still opens
+  // the (then-empty) list.
+  document.getElementById('pinsCount').textContent = ` (${shortlist.length}/${MAX_PICKS})`;
+  document.getElementById('pinsToggleBtn').classList.toggle('is-empty', shortlist.length === 0);
 
   const empty = cart.length === 0;
   document.getElementById('pinsDrawerEmpty').style.display = empty ? '' : 'none';
@@ -3931,16 +4786,18 @@ function buildPrefillUrl(){
 
 function goSubmitNewPicks(){
   const url = buildPrefillUrl();
-  window.open(url, '_blank', 'noopener');
-  markAsSubmitted();
   closeResubmitModal();
+  if(pinsDrawerOpen) closePinsDrawer();
+  showClaimForm(url);
+  markAsSubmitted();
 }
 function goEditOriginalResponse(){
   // No prefill - this sends them to the bare form, where Google's own
   // "edit your response" flow takes over if they're signed into the same
   // account they used before.
-  window.open(CLAIM_FORM.baseUrl, '_blank', 'noopener');
   closeResubmitModal();
+  if(pinsDrawerOpen) closePinsDrawer();
+  showClaimForm(CLAIM_FORM.baseUrl);
 }
 function openResubmitModal(){ document.getElementById('resubmitModal').style.display = ''; }
 function closeResubmitModal(){ document.getElementById('resubmitModal').style.display = 'none'; }
@@ -3970,9 +4827,7 @@ document.getElementById('searchInput').addEventListener('input', renderGrid);
 document.getElementById('searchBtn').addEventListener('click', renderGrid);
 
 function updateSortUI(){
-  const toggle = document.getElementById('sortToggle');
-  toggle.childNodes[0].textContent = sortMode ? `Sort: ${SORT_LABELS[sortMode]}` : 'Sort';
-  toggle.classList.toggle('has-selection', !!sortMode);
+  document.getElementById('sortToggleLabel').textContent = sortMode === 'none' ? 'Sort' : `Sort: ${SORT_LABELS[sortMode]}`;
   document.querySelectorAll('.sort-option').forEach(b => b.classList.toggle('active', b.dataset.sort === sortMode));
 }
 document.getElementById('sortToggle').addEventListener('click', (e) => {
@@ -3985,9 +4840,11 @@ document.getElementById('sortToggle').addEventListener('click', (e) => {
 });
 document.querySelectorAll('.sort-option').forEach(btn => {
   btn.addEventListener('click', () => {
-    sortMode = sortMode === btn.dataset.sort ? null : btn.dataset.sort;
+    if(sortMode === btn.dataset.sort){ closeAllFilterDropdowns(); return; }
+    sortMode = btn.dataset.sort;
     updateSortUI();
     closeAllFilterDropdowns();
+    pendingShuffle = true;
     renderGrid();
   });
 });
@@ -4009,6 +4866,7 @@ document.getElementById('clearFiltersBtn').addEventListener('click', () => {
   lastCategoryKey = null;
   document.getElementById('subTitle').textContent = 'All available alumni';
   buildFilterPanel();
+  pendingShuffle = true;
   renderGrid();
 });
 
@@ -4023,7 +4881,13 @@ function setStatus(html, type){
 // with a later timestamp is held back for the Phase II site, even though
 // they already appear on the public data tab. Set to "" to remove the
 // cutoff entirely once Phase II is ready to launch.
-const PHASE_CUTOFF_ALUM_NAME = "Bri Sandack";
+// Removed (2026-10-17, per request) - this matches the decision already
+// made for the archived index.html (the cutoff was added there, then
+// explicitly reverted - see git history). IMC Connects was built from
+// this file, which still had the cutoff active, so it had inherited a
+// restriction the archived site no longer carries. "For Launch" should
+// show everyone who's responded, not just the Phase I subset.
+const PHASE_CUTOFF_ALUM_NAME = "";
 
 /**
  * Finds PHASE_CUTOFF_ALUM_NAME's timestamp and drops everyone whose
@@ -4119,10 +4983,11 @@ function loadData(){
 // ------------------------------------------------------------
 // VIEW ROUTING — landing screen, category picker, filtered listing
 // ------------------------------------------------------------
-let currentView = 'landing';      // 'landing' | 'category' | 'listing' | 'info'
+let currentView = 'landing';      // 'landing' | 'category' | 'listing' | 'info' | 'claimForm'
 let lastCategoryKey = null;       // which category (if any) led into the current listing
 let viewBeforeInfo = null;        // where Back should return to after visiting About/FAQ/Feedback
 let subTitleBeforeInfo = null;    // the listing's context label, if that's where we came from
+let subTitleBeforeClaimForm = null; // same, but for Back from the embedded claim form
 
 const INFO_TAB_LABELS = { about: 'About', faq: 'FAQ', feedback: 'Feedback' };
 
@@ -4140,6 +5005,8 @@ function showInfo(tab, fromHistory){
   document.getElementById('view-category').style.display = 'none';
   document.getElementById('view-listing').style.display = 'none';
   document.getElementById('view-info').style.display = '';
+  document.getElementById('view-claim-form').style.display = 'none';
+  document.body.classList.remove('listing-active');
   selectInfoTab(tab);
   if(!fromHistory) pushHistory({view:'info', tab, viewBeforeInfo, lastCategoryKey, subTitleBeforeInfo});
 }
@@ -4164,6 +5031,8 @@ function showLanding(fromHistory){
   document.getElementById('view-category').style.display = 'none';
   document.getElementById('view-listing').style.display = 'none';
   document.getElementById('view-info').style.display = 'none';
+  document.getElementById('view-claim-form').style.display = 'none';
+  document.body.classList.remove('listing-active');
   if(!fromHistory) pushHistory({view:'landing'});
 }
 
@@ -4192,6 +5061,8 @@ function showCategoryPicker(key, fromHistory){
   document.getElementById('view-category').style.display = '';
   document.getElementById('view-listing').style.display = 'none';
   document.getElementById('view-info').style.display = 'none';
+  document.getElementById('view-claim-form').style.display = 'none';
+  document.body.classList.remove('listing-active');
 
   const options = collectFilterOptions();
   const values = [...(options[key] || [])].sort();
@@ -4221,8 +5092,13 @@ function showListing(contextLabel, fromHistory, categoryKey, categoryValue){
   document.querySelector('header.site').classList.add('masthead-mode');
   document.getElementById('subTitle').textContent = contextLabel ? contextLabel : 'All available alumni';
   document.getElementById('view-category').style.display = 'none';
-  document.getElementById('view-listing').style.display = '';
+  // 'flex', not '' - #view-listing's own CSS relies on being a flex
+  // container (not the block default) for its fill-remaining-height
+  // chain down to .directory-split (see its own comment).
+  document.getElementById('view-listing').style.display = 'flex';
   document.getElementById('view-info').style.display = 'none';
+  document.getElementById('view-claim-form').style.display = 'none';
+  document.body.classList.add('listing-active');
   document.getElementById('directorySplit').classList.remove('mobile-detail-open');
   // Every time the browsing page is (re)entered, start with the full-
   // width directory and the profile panel closed, per request - not just
@@ -4233,6 +5109,35 @@ function showListing(contextLabel, fromHistory, categoryKey, categoryValue){
   renderPinsDrawer();
   sizeDirectorySplit();
   if(!fromHistory) pushHistory({view:'listing', contextLabel, categoryKey, categoryValue});
+}
+
+// Embeds the sign-up Google Form in-site (2026-10-19, per request) -
+// "embedded=true" is the Form's own supported mode for exactly this;
+// it keeps rendering inside this iframe (including Google's own post-
+// submission confirmation screen) rather than ever navigating the
+// parent page away. formUrl already carries whatever prefill params
+// the caller built (buildPrefillUrl() for a fresh submission, or the
+// bare base form for "edit my response") - this just adds embedded=true
+// on top and swaps the view.
+function showClaimForm(formUrl, fromHistory){
+  window.scrollTo(0, 0);
+  if(currentView !== 'claimForm'){
+    subTitleBeforeClaimForm = document.getElementById('subTitle').textContent;
+  }
+  currentView = 'claimForm';
+  document.getElementById('heroLanding').style.display = 'none';
+  document.getElementById('heroSub').style.display = '';
+  document.getElementById('heroSub').classList.add('compact');
+  document.querySelector('header.site').classList.add('masthead-mode');
+  document.getElementById('subTitle').textContent = 'Submit your picks';
+  document.getElementById('view-category').style.display = 'none';
+  document.getElementById('view-listing').style.display = 'none';
+  document.getElementById('view-info').style.display = 'none';
+  document.getElementById('view-claim-form').style.display = '';
+  document.body.classList.remove('listing-active');
+  const separator = formUrl.includes('?') ? '&' : '?';
+  document.getElementById('claimFormFrame').src = `${formUrl}${separator}embedded=true`;
+  if(!fromHistory) pushHistory({view:'claimForm', formUrl, subTitleBeforeClaimForm});
 }
 
 function goToAllAlumni(){
@@ -4267,6 +5172,11 @@ document.getElementById('backBtn').addEventListener('click', () => {
     } else {
       showLanding();
     }
+  } else if(currentView === 'claimForm'){
+    // Always came from the listing page (the only place Review & Submit
+    // and "edit my response" appear) - subTitleBeforeClaimForm keeps
+    // whatever context label (category filter, etc.) that listing had.
+    showListing(subTitleBeforeClaimForm);
   }
 });
 
@@ -4297,6 +5207,9 @@ window.addEventListener('popstate', (e) => {
     lastCategoryKey = state.lastCategoryKey;
     subTitleBeforeInfo = state.subTitleBeforeInfo;
     showInfo(state.tab, true);
+  } else if(state.view === 'claimForm'){
+    subTitleBeforeClaimForm = state.subTitleBeforeClaimForm;
+    showClaimForm(state.formUrl, true);
   }
 });
 history.replaceState({view:'landing'}, '', location.href);
